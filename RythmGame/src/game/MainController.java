@@ -3,7 +3,11 @@ package game;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.Timer;
 
 public class MainController {
@@ -15,9 +19,13 @@ public class MainController {
 	private Hitbox hitbox = new Hitbox();
 	private int score = 0;
 	public MainController(MyJFrame view){
+		//
+		
+		
 		this.view = view;
 		timer = new Timer(5,listener -> update());
-		view.getStart().addActionListener(listener->ready());
+		view.getStart().addActionListener(listener->{ready();
+				playSound();});
 		view.addKeyListener(new KeyListener() {
 			
 			@Override
@@ -93,6 +101,17 @@ public class MainController {
     			view.setScore(score);
     		}
 		}
+	}
+	public void playSound() {
+	    try {
+	        AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File("fml.wav").getAbsoluteFile());
+	        Clip clip = AudioSystem.getClip();
+	        clip.open(audioInputStream);
+	        clip.start();
+	    } catch(Exception ex) {
+	        System.out.println("Error with playing sound.");
+	        ex.printStackTrace();
+	    }
 	}
 }
 
