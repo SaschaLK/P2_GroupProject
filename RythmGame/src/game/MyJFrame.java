@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuBar;
@@ -15,13 +16,14 @@ public class MyJFrame extends JFrame{
 	private JLabel pscore = new JLabel("Your score:");
 	private JMenuBar menu = new JMenuBar();
 	private JPanel panelmenu = new JPanel();
-	
+	private JButton start = new JButton("Start");
 	public MyJFrame(){
 		
 		setLayout(new BorderLayout());
 		panel = new MyJPanel();
 		setJMenuBar(menu);
 		panelmenu.add(pscore);
+		panelmenu.add(start);
 		add(panelmenu,BorderLayout.NORTH);
 		add(panel,BorderLayout.CENTER);
 		setSize(245,650);
@@ -38,5 +40,8 @@ public class MyJFrame extends JFrame{
 		pscore.setText("Your Score: "+score);
 			
 		setVisible(true);
+	}
+	public JButton getStart(){
+		return start;
 	}
 }

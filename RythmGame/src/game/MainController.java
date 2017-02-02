@@ -16,7 +16,7 @@ public class MainController {
 	public MainController(MyJFrame view){
 		this.view = view;
 		timer = new Timer(5,listener -> update());
-		
+		view.getStart().addActionListener(listener->ready());
 		view.addKeyListener(new KeyListener() {
 			
 			@Override
@@ -48,7 +48,11 @@ public class MainController {
 			}
 		});
 		
-		timer.start();
+		
+	}
+	private void ready(){
+		timer.start();	
+		view.requestFocus();
 	}
 	private void update(){
 		time++;
@@ -60,7 +64,7 @@ public class MainController {
 	private void checkh0(){
 		for(Notes note : list.getNotesList()){
 			if(hitbox.hit0(note.getNote())){
-    			score =+ 10;
+    			score += 10;
     			view.setScore(score);
     		}
 		}
@@ -68,7 +72,7 @@ public class MainController {
 	private void checkh1(){
 		for(Notes note : list.getNotesList()){
 			if(hitbox.hit1(note.getNote())){
-    			score =+ 10;
+    			score += 10;
     			view.setScore(score);
     		}
 		}
@@ -76,7 +80,7 @@ public class MainController {
 	private void checkh2(){
 		for(Notes note : list.getNotesList()){
 			if(hitbox.hit2(note.getNote())){
-    			score =+ 10;
+    			score += 10;
     			view.setScore(score);
     		}
 		}
@@ -84,7 +88,7 @@ public class MainController {
 	private void checkh3(){
 		for(Notes note : list.getNotesList()){
 			if(hitbox.hit3(note.getNote())){
-    			score =+ 10;
+    			score += 10;
     			view.setScore(score);
     		}
 		}
