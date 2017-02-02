@@ -62,6 +62,8 @@ public class MainController {
 			if(hitbox.hit0(note.getNote())){
     			score += 10;
     			view.setScore(score);
+    			
+    			
     		}
 		}
 	}
@@ -70,6 +72,7 @@ public class MainController {
 			if(hitbox.hit1(note.getNote())){
     			score += 10;
     			view.setScore(score);
+    			
     		}
 		}
 	}
@@ -78,6 +81,7 @@ public class MainController {
 			if(hitbox.hit2(note.getNote())){
     			score += 10;
     			view.setScore(score);
+    	
     		}
 		}
 	}
@@ -86,6 +90,7 @@ public class MainController {
 			if(hitbox.hit3(note.getNote())){
     			score += 10;
     			view.setScore(score);
+    			
     		}
 		}
 	}
