@@ -41,7 +41,12 @@ public class MyJFrame extends JFrame{
 			
 		setVisible(true);
 	}
+
 	public JButton getStart(){
 		return start;
 	}
+
+	
+	
+
 }
