@@ -8,4 +8,6 @@ JPanel
 
 Model:
 Notes
+Hitbox
 Songs
+
