@@ -1,0 +1,11 @@
+MVC
+Controller:
+Controller
+
+View:
+JFrame 
+JPanel
+
+Model:
+Notes
+Songs
