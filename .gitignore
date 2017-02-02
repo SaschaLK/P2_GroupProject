@@ -49,3 +49,5 @@ local.properties
 
 # Code Recommenders
 .recommenders/
+.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/properties.index
+.metadata/.plugins/org.eclipse.jdt.core/savedIndexNames.txt
