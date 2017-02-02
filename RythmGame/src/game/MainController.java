@@ -9,7 +9,7 @@ import javax.swing.Timer;
 public class MainController {
 	private MyJFrame view;
 	private Timer timer;
-//	private Notes note=new Notes();
+
 	private NotesList list = new NotesList();
 	private int time=0;
 	private Hitbox hitbox = new Hitbox();
