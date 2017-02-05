@@ -11,7 +11,7 @@ import javax.swing.JPanel;
 
 
 public class MyJFrame extends JFrame{
-	private MyJPanel panel;
+	private MyJPanel panel= new MyJPanel();
 	private JLabel pscore = new JLabel("Your score:");
 	private JMenuBar menu = new JMenuBar();
 	private JPanel panelmenu = new JPanel();
@@ -19,7 +19,7 @@ public class MyJFrame extends JFrame{
 	public MyJFrame(){
 		
 		setLayout(new BorderLayout());
-		panel = new MyJPanel();
+//		panel = new MyJPanel();
 		setJMenuBar(menu);
 		panelmenu.add(pscore);
 		panelmenu.add(start);
@@ -44,7 +44,9 @@ public class MyJFrame extends JFrame{
 	public JButton getStart(){
 		return start;
 	}
-
+	public MyJPanel getPanel(){
+		return panel;		
+	}
 	
 	
 
