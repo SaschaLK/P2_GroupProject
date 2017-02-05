@@ -5,9 +5,11 @@ import java.awt.Rectangle;
 public class Notes {
 	private Rectangle note;
 	private int time;
+	private int lane;
 	public Notes(int x){
 		note = new Rectangle(0, 0, 50, 20);		
 		time=0;
+		lane=x;
 		setNoteLane(x);
 	}
 	public Rectangle getNote(){
@@ -38,5 +40,8 @@ public class Notes {
 		else if(x==3){
 			note = new Rectangle(180, 0, 50, 20);
 		}
-	}	
+	}
+	public int getLane(){
+		return lane;
+	}
 }

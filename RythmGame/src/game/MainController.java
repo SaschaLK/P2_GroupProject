@@ -71,33 +71,37 @@ public class MainController {
 		
 	}
 	private void checkh0(){
-		for(Notes note : list.getNotesList()){
-			if(hitbox.hit0(note.getNote())){
+		for(int i=0;i<list.getNotesList().size();i++){
+			if(hitbox.hit0(list.getNotesList().get(i).getNote())){
     			score += 10;
+    			list.remove(list.getNotesList().get(i));
     			view.setScore(score);
     		}
 		}
 	}
 	private void checkh1(){
-		for(Notes note : list.getNotesList()){
-			if(hitbox.hit1(note.getNote())){
+		for(int i=0;i<list.getNotesList().size();i++){
+			if(hitbox.hit1(list.getNotesList().get(i).getNote())){
     			score += 10;
+    			list.remove(list.getNotesList().get(i));
     			view.setScore(score);
     		}
 		}
 	}
 	private void checkh2(){
-		for(Notes note : list.getNotesList()){
-			if(hitbox.hit2(note.getNote())){
+		for(int i=0;i<list.getNotesList().size();i++){
+			if(hitbox.hit2(list.getNotesList().get(i).getNote())){
     			score += 10;
+    			list.remove(list.getNotesList().get(i));
     			view.setScore(score);
     		}
 		}
 	}
 	private void checkh3(){
-		for(Notes note : list.getNotesList()){
-			if(hitbox.hit3(note.getNote())){
+		for(int i=0;i<list.getNotesList().size();i++){
+			if(hitbox.hit3(list.getNotesList().get(i).getNote())){
     			score += 10;
+    			list.remove(list.getNotesList().get(i));
     			view.setScore(score);
     		}
 		}
@@ -113,5 +117,14 @@ public class MainController {
 	        ex.printStackTrace();
 	    }
 	}
+//	private void checkh0(){
+//		for(Notes note : list.getNotesList()){
+//			if(hitbox.hit0(note.getNote())){
+//    			score += 10;
+//    			list.remove(note);
+//    			view.setScore(score);
+//    		}
+//		}
+//	}
 }
 
