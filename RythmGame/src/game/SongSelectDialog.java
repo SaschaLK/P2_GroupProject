@@ -1,7 +1,9 @@
 package game;
 
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -13,11 +15,11 @@ public class SongSelectDialog extends JDialog {
 
 	private JButton easy = new JButton("Easy Song");
 	private JButton medium = new JButton("Medium Song");
-	private JButton hard = new JButton("Hard Song");
+	private JButton hard = new JButton("Dream - Night of Fire");
 
-	private JLabel easyLabel = new JLabel("Easy");
-	private JLabel mediumLabel = new JLabel("Medium");
-	private JLabel hardLabel = new JLabel("Hard");
+	private JLabel easyLabel = new JLabel("Casual");
+	private JLabel mediumLabel = new JLabel("Pleb");
+	private JLabel hardLabel = new JLabel("Standard");
 	private String songName;
 
 	private MainController controller;
@@ -38,9 +40,12 @@ public class SongSelectDialog extends JDialog {
 
 		easy.addActionListener(new SongSelectActionListener(this, "fml.wav"));
 		medium.addActionListener(new SongSelectActionListener(this, "Kalimba.wav"));
-		hard.addActionListener(new SongSelectActionListener(this, "Sleep_Away.wav"));
+		hard.addActionListener(new SongSelectActionListener(this, "Night_of_Fire.wav"));
 
 		pack();
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+		this.setLocation(dim.width / 2 - this.getSize().width / 2, dim.height / 3 - this.getSize().height / 2);
+
 		setDefaultCloseOperation(HIDE_ON_CLOSE);
 		setVisible(true);
 	}

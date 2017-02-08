@@ -2,16 +2,13 @@
 package game;
 
 import java.awt.Color;
-import java.awt.Frame;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.File;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.JDialog;
 import javax.swing.Timer;
 
 public class MainController {
@@ -28,8 +25,8 @@ public class MainController {
 	private Thread t2 = new Thread();
 	private Thread t3 = new Thread();
 	private Thread t4 = new Thread();
-	
-	private String file;
+
+	private String songFile;
 
 	private SongSelectDialog ssDialog;
 
@@ -38,12 +35,10 @@ public class MainController {
 		this.view = view;
 		timer = new Timer(5, listener -> update());
 		view.getStart().addActionListener(listener -> {
-			//ready();
-			//playSound();
 			selectSong();
 		});
-		
-		// Sollte in der Lage sein 2 noten zuerfassen Thread
+
+		// Sollte in der Lage sein 2 noten zu erfassen Thread
 		view.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
@@ -168,7 +163,7 @@ public class MainController {
 
 	public void playSound() {
 		try {
-			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(file).getAbsoluteFile());
+			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(songFile).getAbsoluteFile());
 			Clip clip = AudioSystem.getClip();
 			clip.open(audioInputStream);
 			clip.start();
@@ -183,11 +178,11 @@ public class MainController {
 	}
 
 	public void setFile(String file) {
-		this.file = file;
+		this.songFile = file;
 	}
 
 	public MyJFrame getView() {
 		return view;
 	}
-	
+
 }
