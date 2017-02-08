@@ -59,4 +59,9 @@ public class NotesList {
 	public void setSong(ArrayList<Notes> nlist) {
 		this.check = nlist;
 	}
+
+	public Song getSong() {
+		return song;
+	}
+	
 }
