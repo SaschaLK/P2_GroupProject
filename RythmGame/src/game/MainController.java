@@ -4,7 +4,12 @@ package game;
 import java.awt.Color;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -27,8 +32,9 @@ public class MainController {
 	private Thread t4 = new Thread();
 
 	private String songFile;
-
 	private SongSelectDialog ssDialog;
+
+	private File file;
 
 	public MainController(MyJFrame view) {
 
@@ -38,8 +44,97 @@ public class MainController {
 			selectSong();
 		});
 
-		// Sollte in der Lage sein 2 noten zu erfassen Thread
+		file = new File("test.txt");
+//		try (FileReader fr = new FileReader(file);
+//				BufferedReader br = new BufferedReader(fr);
+//				FileWriter fw = new FileWriter(file, false);
+//				BufferedWriter bw = new BufferedWriter(fw);) {
+//
+//			view.addKeyListener(new KeyAdapter() {
+//				@Override
+//				public void keyPressed(KeyEvent e) {
+//					t1 = new Thread(new Runnable() {
+//
+//						@Override
+//						public void run() {
+//							if (e.getKeyCode() == KeyEvent.VK_D) {
+//								try {
+//									bw.write("0");
+//									bw.newLine();
+//									bw.write(time);
+//									bw.newLine();
+//								} catch (IOException e1) {
+//									e1.printStackTrace();
+//								}
+//							}
+//						}
+//					});
+//					t2 = new Thread(new Runnable() {
+//
+//						@Override
+//						public void run() {
+//							if (e.getKeyCode() == KeyEvent.VK_F) {
+//								try {
+//									bw.write("1");
+//									bw.newLine();
+//									bw.write(time);
+//									bw.newLine();
+//								} catch (IOException e1) {
+//									e1.printStackTrace();
+//								}
+//							}
+//						}
+//					});
+//					t3 = new Thread(new Runnable() {
+//
+//						@Override
+//						public void run() {
+//							if (e.getKeyCode() == KeyEvent.VK_J) {
+//								try {
+//									bw.write("2");
+//									bw.newLine();
+//									bw.write(time);
+//									bw.newLine();
+//								} catch (IOException e1) {
+//									e1.printStackTrace();
+//								}
+//							}
+//						}
+//					});
+//					t4 = new Thread(new Runnable() {
+//
+//						@Override
+//						public void run() {
+//							if (e.getKeyCode() == KeyEvent.VK_K) {
+//								try {
+//									bw.write("3");
+//									bw.newLine();
+//									bw.write(time);
+//									bw.newLine();
+//								} catch (IOException e1) {
+//									e1.printStackTrace();
+//								}
+//							}
+//						}
+//					});
+//					t1.start();
+//					t2.start();
+//					t3.start();
+//					t4.start();
+//				}
+//
+//			});
+//			// br.close();
+//			// fr.close();
+//			// bw.close();
+//			// fw.close();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+
+		// Sollte in der Lage sein 2 Noten zu erfassen Thread
 		view.addKeyListener(new KeyAdapter() {
+
 			@Override
 			public void keyPressed(KeyEvent e) {
 				t1 = new Thread(new Runnable() {
@@ -47,7 +142,17 @@ public class MainController {
 					@Override
 					public void run() {
 						if (e.getKeyCode() == KeyEvent.VK_D) {
-							checkh0();
+//							checkh0();
+							try(FileWriter fw = new FileWriter(file, true);
+									BufferedWriter bw = new BufferedWriter(fw)) {
+								bw.write("0");
+								bw.newLine();
+								bw.write(Integer.toString(time));
+								bw.newLine();
+								System.out.println(time);
+							} catch (Exception e2) {
+								e2.printStackTrace();
+							}
 						}
 
 					}
@@ -57,7 +162,17 @@ public class MainController {
 					@Override
 					public void run() {
 						if (e.getKeyCode() == KeyEvent.VK_F) {
-							checkh1();
+//							checkh1();
+							try(FileWriter fw = new FileWriter(file, true);
+									BufferedWriter bw = new BufferedWriter(fw)) {
+								bw.write("1");
+								bw.newLine();
+								bw.write(Integer.toString(time));
+								bw.newLine();
+								System.out.println(time);
+							} catch (Exception e2) {
+								e2.printStackTrace();
+							}
 						}
 
 					}
@@ -67,7 +182,17 @@ public class MainController {
 					@Override
 					public void run() {
 						if (e.getKeyCode() == KeyEvent.VK_J) {
-							checkh2();
+//							checkh2();
+							try(FileWriter fw = new FileWriter(file, true);
+									BufferedWriter bw = new BufferedWriter(fw)) {
+								bw.write("2");
+								bw.newLine();
+								bw.write(Integer.toString(time));
+								bw.newLine();
+								System.out.println(time);
+							} catch (Exception e2) {
+								e2.printStackTrace();
+							}
 						}
 
 					}
@@ -77,7 +202,17 @@ public class MainController {
 					@Override
 					public void run() {
 						if (e.getKeyCode() == KeyEvent.VK_K) {
-							checkh3();
+//							checkh3();
+							try(FileWriter fw = new FileWriter(file, true);
+									BufferedWriter bw = new BufferedWriter(fw)) {
+								bw.write("3");
+								bw.newLine();
+								bw.write(Integer.toString(time));
+								bw.newLine();
+								System.out.println(time);
+							} catch (Exception e2) {
+								e2.printStackTrace();
+							}
 						}
 
 					}
