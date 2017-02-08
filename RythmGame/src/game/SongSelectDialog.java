@@ -48,26 +48,19 @@ public class SongSelectDialog extends JDialog {
 	private class SongSelectActionListener implements ActionListener {
 
 		private SongSelectDialog dialog;
+		private String songNameTemp;
 
 		public SongSelectActionListener(SongSelectDialog dialog, String songName) {
 			this.dialog = dialog;
-			dialog.setSongName(songName);
+			songNameTemp = songName;
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			controller.setFile(dialog.getSongName());
+			controller.setFile(songNameTemp);
 			controller.playSound();
 			dialog.setVisible(false);
 			controller.getView().requestFocus();
+			controller.moveNotes();
 		}
 	}
-
-	public String getSongName() {
-		return songName;
-	}
-
-	public void setSongName(String songName) {
-		this.songName = songName;
-	}
-
 }

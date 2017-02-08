@@ -43,18 +43,6 @@ public class MainController {
 			selectSong();
 		});
 		
-		
-		
-//		ssDialog.getEasy().addActionListener(e1 -> {
-//			file = "fml.wav";
-//		});
-//		ssDialog.getMedium().addActionListener(e2 -> {
-//			file = "Kalimba.wav";
-//		});
-//		ssDialog.getHard().addActionListener(e3 -> {
-//			file = "Sleep_Away.wav";
-//		});
-		
 		// Sollte in der Lage sein 2 noten zuerfassen Thread
 		view.addKeyListener(new KeyAdapter() {
 			@Override
@@ -109,7 +97,7 @@ public class MainController {
 
 	}
 
-	private void ready() {
+	public void moveNotes() {
 		timer.start();
 		view.requestFocus();
 	}
