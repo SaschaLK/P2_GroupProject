@@ -10,6 +10,7 @@ import java.io.File;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.swing.JDialog;
 import javax.swing.Timer;
 
 public class MainController {
@@ -27,14 +28,19 @@ public class MainController {
 	private Thread t3=new Thread();
 	private Thread t4=new Thread();
 	
+	private SongSelectDialog ssDialog;
+	
 	public MainController(MyJFrame view){
-		//
 		
-		
+		//JDialog test = new J
+				
 		this.view = view;
 		timer = new Timer(5,listener -> update());
-		view.getStart().addActionListener(listener->{ready();
-				playSound();});
+		view.getStart().addActionListener(listener->{
+				//ready();
+				//playSound();
+				selectSong();
+				});
 		//Sollte in der Lage sein 2 noten zuerfassen Thread
 		view.addKeyListener(new KeyAdapter() {
 			@Override
@@ -87,39 +93,6 @@ public class MainController {
 					
 		});
 		
-//		view.addKeyListener(new KeyListener() {
-//			
-//			@Override
-//			public void keyTyped(KeyEvent e) {
-//				// TODO Auto-generated method stub
-//				
-//			}
-//			
-//			@Override
-//			public void keyReleased(KeyEvent e) {
-//				// TODO Auto-generated method stub
-//				
-//			}
-//			
-//			@Override
-//			public void keyPressed(KeyEvent e) {
-//				
-//				if(e.getKeyCode() == KeyEvent.VK_D){
-//					checkh0();				
-//		    	}
-//				if(e.getKeyCode() == KeyEvent.VK_F){
-//					checkh1();				
-//		    	}	
-//				if(e.getKeyCode() == KeyEvent.VK_J){
-//					checkh2();				
-//		    	}	
-//				if(e.getKeyCode() == KeyEvent.VK_K){
-//					checkh3();				
-//		    	}	
-//			}
-//		});
-		
-	
 	}
 	private void ready(){
 		timer.start();	
@@ -195,14 +168,8 @@ public class MainController {
 	        ex.printStackTrace();
 	    }
 	}
-//	private void checkh0(){
-//		for(Notes note : list.getNotesList()){
-//			if(hitbox.hit0(note.getNote())){
-//    			score += 10;
-//    			list.remove(note);
-//    			view.setScore(score);
-//    		}
-//		}
-//	}
+	public void selectSong(){
+		ssDialog = new SongSelectDialog("Choose a song", false);
+	}
 }
 

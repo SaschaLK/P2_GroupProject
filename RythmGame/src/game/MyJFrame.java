@@ -15,7 +15,7 @@ public class MyJFrame extends JFrame{
 	private JLabel pscore = new JLabel("Your score:");
 	private JMenuBar menu = new JMenuBar();
 	private JPanel panelmenu = new JPanel();
-	private JButton start = new JButton("Start");
+	private JButton start = new JButton("Play Game");
 	public MyJFrame(){
 		
 		setLayout(new BorderLayout());
