@@ -24,14 +24,14 @@ public class MainController {
 	private int time = 0;
 	private Hitbox hitbox = new Hitbox();
 	private int score = 0;
-
+	private boolean running=false;
 	private int color = 0;
 	private Thread t1 = new Thread();
 	private Thread t2 = new Thread();
 	private Thread t3 = new Thread();
 	private Thread t4 = new Thread();
-
 	private String songFile;
+	private Clip clip ;
 	private SongSelectDialog ssDialog;
 
 	private File file;
@@ -41,7 +41,13 @@ public class MainController {
 		this.view = view;
 		timer = new Timer(5, listener -> update());
 		view.getStart().addActionListener(listener -> {
+			if(!running){
 			selectSong();
+			}
+			else{				
+				reset();
+				
+			}
 		});
 
 		file = new File("test.txt");
@@ -229,7 +235,9 @@ public class MainController {
 
 	public void moveNotes() {
 		timer.start();
+		running=true;
 		view.requestFocus();
+		setStartButton();
 	}
 
 	private void update() {
@@ -295,18 +303,26 @@ public class MainController {
 			}
 		}
 	}
-
+	public void reset(){
+		timer.stop();
+		score=0;
+		time=0;		
+		clip.stop();
+		running=false;
+		setStartButton();
+	}
 	public void playSound() {
 		try {
 			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(songFile).getAbsoluteFile());
-			Clip clip = AudioSystem.getClip();
-			clip.open(audioInputStream);
-			clip.start();
+			clip = AudioSystem.getClip();
+			clip.open(audioInputStream);			
+			clip.start();			
 		} catch (Exception ex) {
 			System.out.println("Error with playing sound.");
 			ex.printStackTrace();
 		}
 	}
+	
 
 	public void selectSong() {
 		ssDialog = new SongSelectDialog(null, "Choose a song", true, this);
@@ -318,6 +334,17 @@ public class MainController {
 
 	public MyJFrame getView() {
 		return view;
+	}
+	public void setStartButton(){
+		if(running){
+			String a = "stop";
+		view.setButton(a);
+		}
+		else{
+			String b = "Play Game";
+			view.setButton(b);
+		}
+		
 	}
 
 }

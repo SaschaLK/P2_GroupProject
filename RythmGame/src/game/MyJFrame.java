@@ -55,5 +55,9 @@ public class MyJFrame extends JFrame {
 	public MyJPanel getPanel() {
 		return panel;
 	}
+	public void setButton(String title){
+		start.setText(title);
+		setVisible(true);
+	}
 
 }

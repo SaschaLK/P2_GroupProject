@@ -63,9 +63,11 @@ public class SongSelectDialog extends JDialog {
 		public void actionPerformed(ActionEvent e) {
 			controller.setFile(songNameTemp);
 			controller.playSound();
+			
 			dialog.setVisible(false);
 			controller.getView().requestFocus();
 			controller.moveNotes();
+			
 		}
 	}
 }
