@@ -68,7 +68,8 @@ public class SongSelectDialog extends JDialog {
 			
 			dialog.setVisible(false);
 			controller.getView().requestFocus();
-			controller.moveNotes();		
+			controller.moveNotes();	
+			
 		}
 	}
 }

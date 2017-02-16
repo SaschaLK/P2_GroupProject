@@ -58,5 +58,6 @@ public class MyJFrame extends JFrame {
 	public void setButton(String title){
 		start.setText(title);
 		setVisible(true);
+		
 	}
 }
