@@ -59,5 +59,4 @@ public class MyJFrame extends JFrame {
 		start.setText(title);
 		setVisible(true);
 	}
-
 }

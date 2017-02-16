@@ -343,8 +343,6 @@ public class MainController {
 		else{
 			String b = "Play Game";
 			view.setButton(b);
-		}
-		
+		}	
 	}
-
 }
