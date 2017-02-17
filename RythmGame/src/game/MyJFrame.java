@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -41,10 +42,9 @@ public class MyJFrame extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 
-	public void updateView(ArrayList<Notes> list) {
-		panel.updatePanel(list);
+	public void updateView(List<List<Note>> list, long time, int approachRate) {
+		panel.updatePanel(list, time, approachRate);
 		setVisible(true);
-
 	}
 
 	public void setScore(int score) {

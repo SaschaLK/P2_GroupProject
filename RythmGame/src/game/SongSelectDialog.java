@@ -13,7 +13,7 @@ import javax.swing.JLabel;
 
 public class SongSelectDialog extends JDialog {
 
-	private JButton easy = new JButton("Artist - Song");
+	private JButton easy = new JButton("Halozy - Deconstruction Star");
 	private JButton medium = new JButton("The Hives - Hate to Say I Told You So");
 	private JButton hard = new JButton("Dream - Night of Fire");
 
@@ -21,14 +21,12 @@ public class SongSelectDialog extends JDialog {
 	private JLabel mediumLabel = new JLabel("Pleb");
 	private JLabel hardLabel = new JLabel("Standard");
 	
-	private Song song;
 	private MainController controller;
 
-	public SongSelectDialog(Frame owner, String title, boolean modal, MainController controller, Song song) {
+	public SongSelectDialog(Frame owner, String title, boolean modal, MainController controller) {
 		super(owner, title, modal);
 
 		this.controller = controller;
-		this.song = song;
 		
 		setLayout(new GridLayout(3, 1));
 
@@ -39,7 +37,7 @@ public class SongSelectDialog extends JDialog {
 		add(hardLabel);
 		add(hard);
 
-		easy.addActionListener(new SongSelectActionListener(this, "RegularCasualSong"));
+		easy.addActionListener(new SongSelectActionListener(this, "Deconstruction Star"));
 		medium.addActionListener(new SongSelectActionListener(this, "The_Hives_-_Hate_to_Say_I_Told_You_So"));
 		hard.addActionListener(new SongSelectActionListener(this, "Night_of_Fire"));
 
@@ -54,22 +52,19 @@ public class SongSelectDialog extends JDialog {
 	private class SongSelectActionListener implements ActionListener {
 
 		private SongSelectDialog dialog;
-		private String songNameTemp;
+		private String songName;
 
 		public SongSelectActionListener(SongSelectDialog dialog, String songName) {
 			this.dialog = dialog;
-			songNameTemp = songName;
+			this.songName = songName;
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			song.setFileName(songNameTemp+".txt");
-			controller.setFile(songNameTemp+".wav");
-			controller.playSound();
-			
 			dialog.setVisible(false);
 			controller.getView().requestFocus();
-			controller.moveNotes();	
 			
+			controller.setSelectedSong(Song.songList.get(songName));
+			controller.playSong();
 		}
 	}
 }

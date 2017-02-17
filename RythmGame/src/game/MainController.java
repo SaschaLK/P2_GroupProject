@@ -12,6 +12,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.rmi.server.ServerCloneException;
+import java.util.List;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -27,30 +28,26 @@ public class MainController {
 	private MyJFrame view;
 	private Timer timer;
 
-	private NotesList list = new NotesList();
-	private int time = 0;
-	private Hitbox hitbox = new Hitbox();
 	private int score = 0;
 	private boolean running=false;
 	private int color = 0;
-	private Thread t1 = new Thread();
-	private Thread t2 = new Thread();
-	private Thread t3 = new Thread();
-	private Thread t4 = new Thread();
-	private String songFile;
-	private Clip clip ;
+	private Thread t = new Thread();
 	private SongSelectDialog ssDialog;
 	private JButton youChoseServer = new JButton("Server");
 	private JButton youChoseClient = new JButton("Client");
 	private JButton OkButton = new JButton("Okay");
 	private JDialog selectDialog;
 	private JDialog inputDialog;
-	private int port = 1234;
-	private String ip = "127.0.0.1";
 	private JTextField ipAdresseTextField = new JTextField("",20);
 	private JTextField portTextField = new JTextField("",20);
 
 	private File file;
+	
+	// Keys
+	
+	// Song
+	private Song selectedSong;
+	private long songStartTime;
 	
 	// Server
 	private boolean areYouTheServer = false;
@@ -59,24 +56,22 @@ public class MainController {
 	public MainController(MyJFrame view) {
 
 		this.view = view;
-		timer = new Timer(5, listener -> update());
+		timer = new Timer(1, listener -> update());
 		view.getStart().addActionListener(listener -> {
 			if(!running){
-			selectSong();
+				openSongSelectionDialog();
 			}
 			else{				
 				reset();
-				
 			}
 
 		});
 		view.getMPlayer().addActionListener(listener -> {
 			if(!running){
-			selectMultiplayerRole();
+				selectMultiplayerRole();
 			}
 			else{				
 				reset();
-				
 			}
 		});
 		youChoseServer.addActionListener(listener ->{
@@ -91,8 +86,11 @@ public class MainController {
 		OkButton.addActionListener(listener ->{
 			inputDialog.setVisible(false);
 			try {
-				ip = ipAdresseTextField.getText();
-				port = Integer.valueOf(portTextField.getText());
+				String ip = ipAdresseTextField.getText().trim();
+				int port = Integer.valueOf(portTextField.getText().trim());
+				
+				if(ip.isEmpty()) ip = "localhost";
+				
 				System.out.println(ip + "  " + port + "  " + areYouTheServer);
 				
 				if(socket != null) socket.close();
@@ -113,95 +111,20 @@ public class MainController {
 
 		// Sollte in der Lage sein 2 Noten zu erfassen Thread
 		view.addKeyListener(new KeyAdapter() {
-
-			@Override
 			public void keyPressed(KeyEvent e) {
-				t1 = new Thread(new Runnable() {
-
-					@Override
-					public void run() {
-						if (e.getKeyCode() == KeyEvent.VK_D) {
-//							checkh0();
-							try(FileWriter fw = new FileWriter(file, true);
-									BufferedWriter bw = new BufferedWriter(fw)) {
-								bw.write("0");
-								bw.newLine();
-								bw.write(Integer.toString(time));
-								bw.newLine();
-								System.out.println(time);
-							} catch (Exception e2) {
-								e2.printStackTrace();
-							}
-						}
-
-					}
-				});
-				t2 = new Thread(new Runnable() {
-
-					@Override
-					public void run() {
-						if (e.getKeyCode() == KeyEvent.VK_F) {
-//							checkh1();
-							try(FileWriter fw = new FileWriter(file, true);
-									BufferedWriter bw = new BufferedWriter(fw)) {
-								bw.write("1");
-								bw.newLine();
-								bw.write(Integer.toString(time));
-								bw.newLine();
-								System.out.println(time);
-							} catch (Exception e2) {
-								e2.printStackTrace();
-							}
-						}
-
-					}
-				});
-				t3 = new Thread(new Runnable() {
-
-					@Override
-					public void run() {
-						if (e.getKeyCode() == KeyEvent.VK_J) {
-//							checkh2();
-							try(FileWriter fw = new FileWriter(file, true);
-									BufferedWriter bw = new BufferedWriter(fw)) {
-								bw.write("2");
-								bw.newLine();
-								bw.write(Integer.toString(time));
-								bw.newLine();
-								System.out.println(time);
-							} catch (Exception e2) {
-								e2.printStackTrace();
-							}
-						}
-
-					}
-				});
-				t4 = new Thread(new Runnable() {
-
-					@Override
-					public void run() {
-						if (e.getKeyCode() == KeyEvent.VK_K) {
-//							checkh3();
-							try(FileWriter fw = new FileWriter(file, true);
-									BufferedWriter bw = new BufferedWriter(fw)) {
-								bw.write("3");
-								bw.newLine();
-								bw.write(Integer.toString(time));
-								bw.newLine();
-								System.out.println(time);
-							} catch (Exception e2) {
-								e2.printStackTrace();
-							}
-						}
-
-					}
-				});
-				t1.start();
-				t2.start();
-				t3.start();
-				t4.start();
+				if (e.getKeyCode() == KeyEvent.VK_D) {
+					
+				}
+				if (e.getKeyCode() == KeyEvent.VK_F) {
+					
+				}
+				if (e.getKeyCode() == KeyEvent.VK_J) {
+					
+				}
+				if (e.getKeyCode() == KeyEvent.VK_K) {
+					
+				}
 			}
-
 		});
 
 	}
@@ -214,10 +137,12 @@ public class MainController {
 	}
 
 	private void update() {
-		time++;
 		color++;
-		list.checkTime(time);
-		list.moveNotes();
+		
+		long time = System.currentTimeMillis() - songStartTime;
+		
+		List<List<Note>> lanes = selectedSong.getNotes(time, 8);
+		
 		if (color == 30) {
 			view.getPanel().setColor(Color.BLUE, 1);
 			view.getPanel().setColor(Color.BLUE, 2);
@@ -225,71 +150,74 @@ public class MainController {
 			view.getPanel().setColor(Color.BLUE, 4);
 
 		}
-		view.updateView(list.getNotesList());
-
+		
+		view.updateView(lanes, time, 8);
 	}
 
 	private void checkh0() {
-		for (int i = 0; i < list.getNotesList().size(); i++) {
-			if (hitbox.hit0(list.getNotesList().get(i).getNote())) {
-				score += 10;
-				view.getPanel().setColor(Color.green, 1);
-				color = 0;
-				list.remove(list.getNotesList().get(i));
-				view.setScore(score);
-			}
-		}
+//		for (int i = 0; i < list.getNotesList().size(); i++) {
+//			if (hitbox.hit0(list.getNotesList().get(i).getNote())) {
+//				score += 10;
+//				view.getPanel().setColor(Color.green, 1);
+//				color = 0;
+//				list.remove(list.getNotesList().get(i));
+//				view.setScore(score);
+//			}
+//		}
 	}
 
 	private void checkh1() {
-		for (int i = 0; i < list.getNotesList().size(); i++) {
-			if (hitbox.hit1(list.getNotesList().get(i).getNote())) {
-				score += 10;
-				view.getPanel().setColor(Color.green, 2);
-				color = 0;
-				list.remove(list.getNotesList().get(i));
-				view.setScore(score);
-			}
-		}
+//		for (int i = 0; i < list.getNotesList().size(); i++) {
+//			if (hitbox.hit1(list.getNotesList().get(i).getNote())) {
+//				score += 10;
+//				view.getPanel().setColor(Color.green, 2);
+//				color = 0;
+//				list.remove(list.getNotesList().get(i));
+//				view.setScore(score);
+//			}
+//		}
 	}
 
 	private void checkh2() {
-		for (int i = 0; i < list.getNotesList().size(); i++) {
-			if (hitbox.hit2(list.getNotesList().get(i).getNote())) {
-				score += 10;
-				view.getPanel().setColor(Color.green, 3);
-				color = 0;
-				list.remove(list.getNotesList().get(i));
-				view.setScore(score);
-			}
-		}
+//		for (int i = 0; i < list.getNotesList().size(); i++) {
+//			if (hitbox.hit2(list.getNotesList().get(i).getNote())) {
+//				score += 10;
+//				view.getPanel().setColor(Color.green, 3);
+//				color = 0;
+//				list.remove(list.getNotesList().get(i));
+//				view.setScore(score);
+//			}
+//		}
 	}
 
 	private void checkh3() {
-		for (int i = 0; i < list.getNotesList().size(); i++) {
-			if (hitbox.hit3(list.getNotesList().get(i).getNote())) {
-				score += 10;
-				view.getPanel().setColor(Color.green, 4);
-				color = 0;
-				list.remove(list.getNotesList().get(i));
-				view.setScore(score);
-			}
-		}
+//		for (int i = 0; i < list.getNotesList().size(); i++) {
+//			if (hitbox.hit3(list.getNotesList().get(i).getNote())) {
+//				score += 10;
+//				view.getPanel().setColor(Color.green, 4);
+//				color = 0;
+//				list.remove(list.getNotesList().get(i));
+//				view.setScore(score);
+//			}
+//		}
 	}
+	
 	public void reset(){
 		timer.stop();
 		score=0;
-		time=0;		
-		clip.stop();
+		selectedSong.stop();
 		running=false;
 		setStartButton();
 	}
-	public void playSound() {
+	
+	public void playSong() {
 		try {
-			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(songFile).getAbsoluteFile());
-			clip = AudioSystem.getClip();
-			clip.open(audioInputStream);			
-			clip.start();			
+			getSelectedSong().play();
+			timer.start();
+			running=true;
+			view.requestFocus();
+			
+			songStartTime = System.currentTimeMillis();
 		} catch (Exception ex) {
 			System.out.println("Error with playing sound.");
 			ex.printStackTrace();
@@ -297,9 +225,10 @@ public class MainController {
 	}
 	
 
-	public void selectSong() {
-		ssDialog = new SongSelectDialog(null, "Choose a song", true, this, list.getSong());
+	public void openSongSelectionDialog() {
+		ssDialog = new SongSelectDialog(null, "Choose a song", true, this);
 	}
+	
 	public void selectMultiplayerRole() {
 		selectDialog = new JDialog(view, "Server or Client", true);
 		selectDialog.setSize(300, 300);
@@ -348,13 +277,10 @@ public class MainController {
 		inputDialog.setVisible(true);
 	}
 
-	public void setFile(String file) {
-		this.songFile = file;
-	}
-
 	public MyJFrame getView() {
 		return view;
 	}
+	
 	public void setStartButton(){
 		if(running){
 			String a = "stop";
@@ -365,5 +291,13 @@ public class MainController {
 			view.setButton(b);
 			
 		}	
+	}
+
+	public Song getSelectedSong() {
+		return selectedSong;
+	}
+
+	public void setSelectedSong(Song selectedSong) {
+		this.selectedSong = selectedSong;
 	}
 }

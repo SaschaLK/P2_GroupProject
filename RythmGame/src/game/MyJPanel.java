@@ -3,19 +3,22 @@ package game;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
-import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JPanel;
 
 public class MyJPanel extends JPanel {
 	private Hitbox hitbox = new Hitbox();
 	private Rectangle background = new Rectangle(0, 0, 230, 600);
-	private NotesList list = new NotesList();
-	private ArrayList<Notes> nlist = new ArrayList<>();
+
 	private Color hcolor0 = Color.BLUE;
 	private Color hcolor1 = Color.BLUE;
 	private Color hcolor2 = Color.BLUE;
 	private Color hcolor3 = Color.BLUE;
+	
+	private List<List<Note>> notes;
+	private long time;
+	private int approachRate;
 
 	public MyJPanel() {
 		repaint();
@@ -39,16 +42,25 @@ public class MyJPanel extends JPanel {
 		g.setColor(hcolor3);
 		g.fillRect(hitbox.getHitbox3().x, hitbox.getHitbox3().y, hitbox.getHitbox3().width, hitbox.getHitbox3().height);
 
-		g.setColor(Color.PINK);
-		for (Notes note : list.getNotesList()) {
-			g.fillRect(note.getNote().x, note.getNote().y, note.getNote().width, note.getNote().height);
+		long timeMillis = time;
+		float pixelsPerMillisecond = background.height / (float) ((10 - approachRate) * 150 + 450);
+		
+		if(notes == null) return;
+		
+		g.setColor(Color.BLACK);
+		for (int i = 0; i < notes.size(); i++) {
+			for(Note note : notes.get(i)) {
+				int delta = (int) ((note.getTime() - timeMillis) * pixelsPerMillisecond);
+				
+				g.fillRect(60 * i, -delta + 480, note.getNote().width, note.getNote().height);
+			}
 		}
-
 	}
 
-	public void updatePanel(ArrayList<Notes> nlist) {
-		this.nlist = nlist;
-		list.setList(nlist);
+	public void updatePanel(List<List<Note>> nlist, long time, int approachRate) {
+		this.notes = nlist;
+		this.time = time;
+		this.approachRate = approachRate;
 		repaint();
 	}
 
