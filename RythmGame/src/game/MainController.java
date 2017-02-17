@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -17,6 +18,8 @@ import java.util.List;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -44,10 +47,18 @@ public class MainController {
 	private File file;
 	
 	// Keys
+	public static boolean K1Down = false;
+	public static boolean K2Down = false;
+	public static boolean K3Down = false;
+	public static boolean K4Down = false;
 	
 	// Song
 	private Song selectedSong;
 	private long songStartTime;
+	
+	private int approachRate = 8;
+	
+	private Clip hitsound;
 	
 	// Server
 	private boolean areYouTheServer = false;
@@ -110,20 +121,63 @@ public class MainController {
 		file = new File("test.txt");
 
 		// Sollte in der Lage sein 2 Noten zu erfassen Thread
-		view.addKeyListener(new KeyAdapter() {
+		view.addKeyListener(new KeyListener() {
 			public void keyPressed(KeyEvent e) {
+				try {
+					if (e.getKeyCode() == KeyEvent.VK_D) {
+						K1Down = true;
+						Clip hitsound = AudioSystem.getClip();
+						hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
+						hitsound.start();
+					}
+					if (e.getKeyCode() == KeyEvent.VK_F) {
+						K2Down = true;
+						Clip hitsound = AudioSystem.getClip();
+						hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
+						hitsound.start();
+					}
+					if (e.getKeyCode() == KeyEvent.VK_J) {
+						K3Down = true;
+						Clip hitsound = AudioSystem.getClip();
+						hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
+						hitsound.start();
+					}
+					if (e.getKeyCode() == KeyEvent.VK_K) {
+						K4Down = true;
+						Clip hitsound = AudioSystem.getClip();
+						hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
+						hitsound.start();
+					}
+				} catch (LineUnavailableException | IOException | UnsupportedAudioFileException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+				if(e.getKeyCode() == KeyEvent.VK_F3) {
+					approachRate++;
+				}
+				if(e.getKeyCode() == KeyEvent.VK_F4) {
+					approachRate--;
+				}
+			}
+			
+			public void keyReleased(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_D) {
-					
+					K1Down = false;
 				}
 				if (e.getKeyCode() == KeyEvent.VK_F) {
-					
+					K2Down = false;
 				}
 				if (e.getKeyCode() == KeyEvent.VK_J) {
-					
+					K3Down = false;
 				}
 				if (e.getKeyCode() == KeyEvent.VK_K) {
-					
+					K4Down = false;
 				}
+			}
+
+			public void keyTyped(KeyEvent e) {
+				
 			}
 		});
 
@@ -137,21 +191,11 @@ public class MainController {
 	}
 
 	private void update() {
-		color++;
-		
 		long time = System.currentTimeMillis() - songStartTime;
 		
-		List<List<Note>> lanes = selectedSong.getNotes(time, 8);
-		
-		if (color == 30) {
-			view.getPanel().setColor(Color.BLUE, 1);
-			view.getPanel().setColor(Color.BLUE, 2);
-			view.getPanel().setColor(Color.BLUE, 3);
-			view.getPanel().setColor(Color.BLUE, 4);
-
-		}
-		
-		view.updateView(lanes, time, 8);
+		List<List<Note>> lanes = selectedSong.getNotes(time, approachRate);
+		System.out.println(approachRate);
+		view.updateView(lanes, selectedSong.getCurrentTiming(time, true), time, approachRate);
 	}
 
 	private void checkh0() {

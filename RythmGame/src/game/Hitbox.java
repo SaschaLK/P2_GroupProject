@@ -9,10 +9,10 @@ public class Hitbox {
 	private Rectangle hitbox3;
 
 	public Hitbox() {
-		hitbox0 = new Rectangle(0, 500, 50, 40);
-		hitbox1 = new Rectangle(60, 500, 50, 40);
-		hitbox2 = new Rectangle(120, 500, 50, 40);
-		hitbox3 = new Rectangle(180, 500, 50, 40);
+		hitbox0 = new Rectangle(0, 530, 50, 10);
+		hitbox1 = new Rectangle(60, 530, 50, 10);
+		hitbox2 = new Rectangle(120, 530, 50, 10);
+		hitbox3 = new Rectangle(180, 530, 50, 10);
 	}
 
 	public Rectangle getHitbox0() {

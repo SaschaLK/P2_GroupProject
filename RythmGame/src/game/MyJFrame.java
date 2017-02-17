@@ -42,8 +42,8 @@ public class MyJFrame extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 
-	public void updateView(List<List<Note>> list, long time, int approachRate) {
-		panel.updatePanel(list, time, approachRate);
+	public void updateView(List<List<Note>> list, TimingPoint timingPoint, long time, int approachRate) {
+		panel.updatePanel(list, timingPoint, time, approachRate);
 		setVisible(true);
 	}
 

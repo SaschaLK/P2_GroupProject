@@ -32,6 +32,7 @@ public class Song {
 	
 	// Beatmap info
 	private List<List<Note>> list;
+	private List<TimingPoint> timingPoints;
 	
 	// Datei Info
 	private String fileName;
@@ -49,6 +50,8 @@ public class Song {
 		list.add(new ArrayList<Note>());
 		list.add(new ArrayList<Note>());
 		
+		timingPoints = new ArrayList<TimingPoint>();
+		
 		readSongNotes();
 	}
 	
@@ -56,7 +59,7 @@ public class Song {
 		try {
 			audioInputStream = AudioSystem.getAudioInputStream(new File(fileName+".wav").getAbsoluteFile());
 			clip = AudioSystem.getClip();
-			clip.open(audioInputStream);			
+			clip.open(audioInputStream);
 			clip.start();
 		} catch (LineUnavailableException | IOException | UnsupportedAudioFileException e) {
 			e.printStackTrace();
@@ -69,12 +72,29 @@ public class Song {
 	}
 	
 	public void readSongNotes() {
+		boolean readingTiming = false;
 		boolean readingNotes = false;
 		
 		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String line = "";
 			
 			while((line = br.readLine()) != null) {
+				if(readingTiming) {
+					if(line.isEmpty()) {
+						readingTiming = false;
+					}
+					else {
+						String[] data = line.split(",");
+						
+						timingPoints.add(new TimingPoint(Integer.valueOf(data[0]), Float.valueOf(data[1]), data[6].equals("0")));
+					}
+				}
+				else {
+					if(line.equals("[TimingPoints]")) {
+						readingTiming = true;
+					}
+				}
+				
 				if(readingNotes) {
 					if(line.isEmpty()) {
 						readingNotes = false;
@@ -91,7 +111,7 @@ public class Song {
 					}
 				}
 				else {
-					if(br.readLine().equals("[HitObjects]")) {
+					if(line.equals("[HitObjects]")) {
 						readingNotes = true;
 					}
 				}
@@ -99,6 +119,18 @@ public class Song {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public TimingPoint getCurrentTiming(long time, boolean nonInherited) {
+		for(int i = timingPoints.size() - 1; i >= 0; i--) {
+			if(i == 0) return timingPoints.get(0);
+			
+			if(nonInherited && timingPoints.get(i - 1).isInherited()) continue;
+			
+			if(timingPoints.get(i).getOffset() > time && timingPoints.get(i-1).getOffset() <= time) return timingPoints.get(i-1);
+		}
+		
+		return null;
 	}
 
 	public List<List<Note>> getCurrentSong() {
