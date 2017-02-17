@@ -7,13 +7,8 @@ import java.io.*;
 public class Client {
 
 	private int i = 0;
-	private Timer t = new Timer(10, listener -> update());
 
-	public OsuClient3() {
-		t.start();
-	}
-
-	private void update() {
+	private void question() {
 		try {
 			i++;
 			Socket socket = new Socket("localhost", 6000);
@@ -31,7 +26,4 @@ public class Client {
 
 	}
 
-	public static void main(String[] args) {
-		new OsuClient3();
-	}
 }
