@@ -25,7 +25,7 @@ class ServerSocket implements ISocket {
 					socket.bind(new InetSocketAddress("localhost", port));
 					socket.configureBlocking(false);
 					
-					SelectionKey selectKey = socket.register(selector, socket.validOps(), null);
+					socket.register(selector, socket.validOps(), null);
 					
 					System.out.println("Server is running!");
 					
@@ -41,22 +41,23 @@ class ServerSocket implements ISocket {
 								
 								if(client != null) {
 									client.configureBlocking(false);
-									client.register(selector, client.validOps());
+									client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 									
 									System.out.println("New connection!");
 								}
 							}
 							// If the client send something receive it here
 							if(key.isReadable()) {
-								System.out.println("Reading incoming data...");
 								SocketChannel client = (SocketChannel) key.channel();
 								ByteBuffer buffer = ByteBuffer.allocate(4);
 								
-								client.read(buffer);
+								int read = client.read(buffer);
 								
-								clientScore = byteArrayToInt(buffer.array());
-								
-								System.out.println(clientScore);
+								if(read > 0) {
+									clientScore = byteArrayToInt(buffer.array());
+									
+									System.out.println("Score: "+clientScore);
+								}
 							}
 							// Sending the score of all other clients to all clients
 							if(key.isWritable()) {
@@ -64,7 +65,8 @@ class ServerSocket implements ISocket {
 								SocketChannel client = (SocketChannel) key.channel();
 								ByteBuffer buffer = ByteBuffer.allocate(4);
 								
-								buffer.putInt(0); // TODO: send score here
+								buffer.putInt(666); // TODO: send score here
+								buffer.flip();
 								
 								client.write(buffer);
 							}
@@ -94,15 +96,5 @@ class ServerSocket implements ISocket {
 	        value += (b[i] & 0x000000FF) << shift;
 	    }
 	    return value;
-	}
-	
-	public static byte[] intToByteArray(int a)
-	{
-	    byte[] ret = new byte[4];
-	    ret[0] = (byte) (a & 0xFF);   
-	    ret[1] = (byte) ((a >> 8) & 0xFF);   
-	    ret[2] = (byte) ((a >> 16) & 0xFF);   
-	    ret[3] = (byte) ((a >> 24) & 0xFF);
-	    return ret;
 	}
 }
