@@ -49,9 +49,12 @@ public class MainController {
 	private String ip = "127.0.0.1";
 	private JTextField ipAdresseTextField = new JTextField("",20);
 	private JTextField portTextField = new JTextField("",20);
-	private boolean areYouTheServer = false;
 
 	private File file;
+	
+	// Server
+	private boolean areYouTheServer = false;
+	private ISocket socket;
 
 	public MainController(MyJFrame view) {
 
@@ -87,13 +90,19 @@ public class MainController {
 		});
 		OkButton.addActionListener(listener ->{
 			inputDialog.setVisible(false);
-//			if (portTextField.getText() != "1234" ) {
-//				portTextField.setText("1235");
-//			}
 			try {
 				ip = ipAdresseTextField.getText();
 				port = Integer.valueOf(portTextField.getText());
 				System.out.println(ip + "  " + port + "  " + areYouTheServer);
+				
+				if(socket != null) socket.close();
+				
+				if(areYouTheServer) {
+					socket = new ServerSocket(port);
+				}
+				else {
+					socket = new ClientSocket(ip, port);
+				}
 			} catch (Exception e) {
 				// TODO: handle exception
 			}
