@@ -2,6 +2,7 @@
 package game;
 
 import java.awt.Color;
+import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
@@ -10,10 +11,16 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.rmi.server.ServerCloneException;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.Timer;
 
 public class MainController {
@@ -33,6 +40,16 @@ public class MainController {
 	private String songFile;
 	private Clip clip ;
 	private SongSelectDialog ssDialog;
+	private JButton youChoseServer = new JButton("Server");
+	private JButton youChoseClient = new JButton("Client");
+	private JButton OkButton = new JButton("Okay");
+	private JDialog selectDialog;
+	private JDialog inputDialog;
+	private int port = 1234;
+	private String ip = "127.0.0.1";
+	private JTextField ipAdresseTextField = new JTextField("",20);
+	private JTextField portTextField = new JTextField("",20);
+	private boolean areYouTheServer = false;
 
 	private File file;
 
@@ -48,7 +65,40 @@ public class MainController {
 				reset();
 				
 			}
+
 		});
+		view.getMPlayer().addActionListener(listener -> {
+			if(!running){
+			selectMultiplayerRole();
+			}
+			else{				
+				reset();
+				
+			}
+		});
+		youChoseServer.addActionListener(listener ->{
+			areYouTheServer = true;
+			startServerDialog();
+			
+		});
+		youChoseClient.addActionListener(listener ->{
+			areYouTheServer = false;
+			startClientDialog();
+		});
+		OkButton.addActionListener(listener ->{
+			inputDialog.setVisible(false);
+//			if (portTextField.getText() != "1234" ) {
+//				portTextField.setText("1235");
+//			}
+			try {
+				ip = ipAdresseTextField.getText();
+				port = Integer.valueOf(portTextField.getText());
+				System.out.println(ip + "  " + port + "  " + areYouTheServer);
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+		});
+
 
 		file = new File("test.txt");
 
@@ -240,6 +290,53 @@ public class MainController {
 
 	public void selectSong() {
 		ssDialog = new SongSelectDialog(null, "Choose a song", true, this, list.getSong());
+	}
+	public void selectMultiplayerRole() {
+		selectDialog = new JDialog(view, "Server or Client", true);
+		selectDialog.setSize(300, 300);
+		selectDialog.setLayout(new GridLayout(2, 1));
+		selectDialog.setLocationRelativeTo(view);
+		selectDialog.add(youChoseServer);
+		selectDialog.add(youChoseClient);
+		selectDialog.setVisible(true);
+
+	}
+	public void startServerDialog(){
+		selectDialog.setVisible(false);
+		inputDialog = new JDialog(view, "Enter server data", true);
+		inputDialog.setSize(300, 200);
+		inputDialog.setLocationRelativeTo(view);
+		inputDialog.setLayout(new GridLayout(2, 1));
+		JLabel enterPort = new JLabel("Enter the port");
+		JPanel clientDialogPortPanel = new JPanel();
+		clientDialogPortPanel.add(enterPort);
+		clientDialogPortPanel.add(portTextField);
+		
+		inputDialog.add(clientDialogPortPanel);
+		inputDialog.add(OkButton);
+		
+		inputDialog.setVisible(true);
+	}
+	public void startClientDialog(){
+		selectDialog.setVisible(false);
+		inputDialog = new JDialog(view, "Enter server data", true);
+		inputDialog.setSize(300, 400);
+		inputDialog.setLocationRelativeTo(view);
+		inputDialog.setLayout(new GridLayout(3, 1));
+		JLabel enterIp = new JLabel("Enter the IP address");
+		JLabel enterPort = new JLabel("Enter the port");
+		JPanel clientDialogIpPanel = new JPanel();
+		JPanel clientDialogPortPanel = new JPanel();
+		clientDialogIpPanel.add(enterIp);
+		clientDialogIpPanel.add(ipAdresseTextField);		
+		clientDialogPortPanel.add(enterPort);
+		clientDialogPortPanel.add(portTextField);
+		
+		inputDialog.add(clientDialogIpPanel);
+		inputDialog.add(clientDialogPortPanel);
+		inputDialog.add(OkButton);
+		
+		inputDialog.setVisible(true);
 	}
 
 	public void setFile(String file) {

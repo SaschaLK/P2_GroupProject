@@ -2,6 +2,7 @@ package game;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.util.ArrayList;
 
@@ -16,15 +17,20 @@ public class MyJFrame extends JFrame {
 	private JLabel pscore = new JLabel("Your score:");
 	private JMenuBar menu = new JMenuBar();
 	private JPanel panelmenu = new JPanel();
+	private JPanel menuGrid = new JPanel(new GridLayout(2,1));
 	private JButton start = new JButton("Play Game");
+	private JButton mPlayer = new JButton("Multiplayer");
 
 	public MyJFrame() {
-
+	
+		
 		setLayout(new BorderLayout());
 		setJMenuBar(menu);
 		panelmenu.add(pscore);
 		panelmenu.add(start);
-		add(panelmenu, BorderLayout.NORTH);
+		menuGrid.add(panelmenu);
+		menuGrid.add(mPlayer);
+		add(menuGrid, BorderLayout.NORTH);
 		add(panel, BorderLayout.CENTER);
 
 		setSize(245, 650);
@@ -50,6 +56,9 @@ public class MyJFrame extends JFrame {
 
 	public JButton getStart() {
 		return start;
+	}
+	public JButton getMPlayer() {
+		return mPlayer;
 	}
 
 	public MyJPanel getPanel() {
