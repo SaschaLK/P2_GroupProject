@@ -13,6 +13,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.rmi.server.ServerCloneException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.sound.sampled.AudioInputStream;
@@ -31,7 +32,6 @@ public class MainController {
 	private MyJFrame view;
 	private Timer timer;
 
-	private int score = 0;
 	private boolean running=false;
 	private int color = 0;
 	private Thread t = new Thread();
@@ -57,8 +57,18 @@ public class MainController {
 	private long songStartTime;
 	
 	private int approachRate = 8;
+	private int difficulty = 8;
+	
+	private double score = 0;
+	private int bonus = 0;
+	private int combo = 0;
+	
+	private AccuracyRating lastRating;
+	private long timeLastRating;
 	
 	private Clip hitsound;
+	
+	private List<Note> hitNotes;
 	
 	// Server
 	private boolean areYouTheServer = false;
@@ -123,35 +133,30 @@ public class MainController {
 		// Sollte in der Lage sein 2 Noten zu erfassen Thread
 		view.addKeyListener(new KeyListener() {
 			public void keyPressed(KeyEvent e) {
-				try {
 					if (e.getKeyCode() == KeyEvent.VK_D) {
 						K1Down = true;
-						Clip hitsound = AudioSystem.getClip();
-						hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
-						hitsound.start();
+						playHitsound();
+						
+						noteHit(0);
 					}
 					if (e.getKeyCode() == KeyEvent.VK_F) {
 						K2Down = true;
-						Clip hitsound = AudioSystem.getClip();
-						hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
-						hitsound.start();
+						playHitsound();
+						
+						noteHit(1);
 					}
 					if (e.getKeyCode() == KeyEvent.VK_J) {
 						K3Down = true;
-						Clip hitsound = AudioSystem.getClip();
-						hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
-						hitsound.start();
+						playHitsound();
+						
+						noteHit(2);
 					}
 					if (e.getKeyCode() == KeyEvent.VK_K) {
 						K4Down = true;
-						Clip hitsound = AudioSystem.getClip();
-						hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
-						hitsound.start();
+						playHitsound();
+						
+						noteHit(3);
 					}
-				} catch (LineUnavailableException | IOException | UnsupportedAudioFileException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
 				
 				if(e.getKeyCode() == KeyEvent.VK_F3) {
 					approachRate++;
@@ -160,7 +165,7 @@ public class MainController {
 					approachRate--;
 				}
 			}
-			
+
 			public void keyReleased(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_D) {
 					K1Down = false;
@@ -182,73 +187,131 @@ public class MainController {
 		});
 
 	}
-
-	public void moveNotes() {
-		timer.start();
-		running=true;
-		view.requestFocus();
-		setStartButton();
+	
+	public void playHitsound() {
+		try {
+			Clip hitsound = AudioSystem.getClip();
+			hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
+			hitsound.start();
+		} catch (LineUnavailableException | IOException | UnsupportedAudioFileException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 
 	private void update() {
 		long time = System.currentTimeMillis() - songStartTime;
 		
 		List<List<Note>> lanes = selectedSong.getNotes(time, approachRate);
-		System.out.println(approachRate);
-		view.updateView(lanes, selectedSong.getCurrentTiming(time, true), time, approachRate);
+		
+		view.updateView(this, lanes, selectedSong.getCurrentTiming(time, true), time, approachRate);
+		
+		for(int i = 0; i < 4; i++) {
+			Note note = selectedSong.getNotes(i).stream().filter(x -> !hitNotes.contains(x)).findFirst().orElse(null);
+			
+			if(note == null) continue;
+			
+			if(note.getTime() - (System.currentTimeMillis() - songStartTime) < -(151 - (3 * difficulty))) {
+				hitNotes.add(note);
+				
+				setCombo(0);
+				bonus = 0;
+				
+				setLastRating(AccuracyRating.MISS);
+				setTimeLastRating(System.currentTimeMillis());
+			}
+		}
 	}
-
-	private void checkh0() {
-//		for (int i = 0; i < list.getNotesList().size(); i++) {
-//			if (hitbox.hit0(list.getNotesList().get(i).getNote())) {
-//				score += 10;
-//				view.getPanel().setColor(Color.green, 1);
-//				color = 0;
-//				list.remove(list.getNotesList().get(i));
-//				view.setScore(score);
-//			}
-//		}
+	
+	private void noteHit(int i) {
+		Note note = null;
+		
+		for(Note n : selectedSong.getNotes(i)) {
+			if(!hitNotes.contains(n)) {
+				note = n;
+				break;
+			}
+		}
+		
+		long error = Math.abs((System.currentTimeMillis() - songStartTime) - note.getTime());
+		
+		AccuracyRating acc = getAccuracyForError(error);
+		
+		if(acc == null) return;
+		
+		hitNotes.add(note);
+		
+		setLastRating(acc);
+		setTimeLastRating(System.currentTimeMillis());
+		
+		if(acc != AccuracyRating.MISS) {
+			setCombo(getCombo() + 1);
+		}
+		else {
+			setCombo(0);
+		}
+		
+		int hitValue = 0;
+		int hitBonus = 0;
+		int hitBonusValue = 0;
+		
+		switch(acc) {
+		case MARVELOUS:
+			hitValue = 320;
+			hitBonusValue = 32;
+			hitBonus = 2;
+			break;
+		case PERFECT:
+			hitValue = 300;
+			hitBonusValue = 16;
+			hitBonus = 1;
+			break;
+		case GREAT:
+			hitValue = 200;
+			hitBonusValue = 16;
+			hitBonus = -8;
+			break;
+		case GOOD:
+			hitValue = 100;
+			hitBonusValue = 8;
+			hitBonus = -24;
+			break;
+		case BAD:
+			hitValue = 50;
+			hitBonusValue = 4;
+			hitBonus = -44;
+			break;
+		case MISS:
+			hitValue = 0;
+			hitBonusValue = 0;
+			bonus = 0;
+		}
+		
+		bonus = bonus + hitBonus;
+		if(bonus > 100) bonus = 100;
+		if(bonus < 0) bonus = 0;
+		
+		double baseScore = ((1000000 * 0.5 / (float)selectedSong.getNoteCount()) * (hitValue / 320));
+		double bonusScore = ((1000000 * 0.5 / (float)selectedSong.getNoteCount()) * (hitBonusValue * Math.sqrt(bonus) / 320));
+		
+		score += baseScore + bonusScore;
+		
+		view.setScore((int) score);
 	}
-
-	private void checkh1() {
-//		for (int i = 0; i < list.getNotesList().size(); i++) {
-//			if (hitbox.hit1(list.getNotesList().get(i).getNote())) {
-//				score += 10;
-//				view.getPanel().setColor(Color.green, 2);
-//				color = 0;
-//				list.remove(list.getNotesList().get(i));
-//				view.setScore(score);
-//			}
-//		}
-	}
-
-	private void checkh2() {
-//		for (int i = 0; i < list.getNotesList().size(); i++) {
-//			if (hitbox.hit2(list.getNotesList().get(i).getNote())) {
-//				score += 10;
-//				view.getPanel().setColor(Color.green, 3);
-//				color = 0;
-//				list.remove(list.getNotesList().get(i));
-//				view.setScore(score);
-//			}
-//		}
-	}
-
-	private void checkh3() {
-//		for (int i = 0; i < list.getNotesList().size(); i++) {
-//			if (hitbox.hit3(list.getNotesList().get(i).getNote())) {
-//				score += 10;
-//				view.getPanel().setColor(Color.green, 4);
-//				color = 0;
-//				list.remove(list.getNotesList().get(i));
-//				view.setScore(score);
-//			}
-//		}
+	
+	private AccuracyRating getAccuracyForError(long error) {
+		if(error <= 16) return AccuracyRating.MARVELOUS; 
+		if(error <= 64 - (3 * difficulty)) return AccuracyRating.PERFECT; 
+		if(error <= 97 - (3 * difficulty)) return AccuracyRating.GREAT; 
+		if(error <= 127 - (3 * difficulty)) return AccuracyRating.GOOD; 
+		if(error <= 151 - (3 * difficulty)) return AccuracyRating.BAD; 
+		
+		return null;
 	}
 	
 	public void reset(){
+		hitNotes = new ArrayList<Note>();
 		timer.stop();
-		score=0;
 		selectedSong.stop();
 		running=false;
 		setStartButton();
@@ -256,12 +319,17 @@ public class MainController {
 	
 	public void playSong() {
 		try {
+			hitNotes = new ArrayList<Note>();
+			score = 0;
+			setCombo(0);
+			
 			getSelectedSong().play();
+			songStartTime = System.currentTimeMillis();
 			timer.start();
 			running=true;
+			
 			view.requestFocus();
 			
-			songStartTime = System.currentTimeMillis();
 		} catch (Exception ex) {
 			System.out.println("Error with playing sound.");
 			ex.printStackTrace();
@@ -343,5 +411,29 @@ public class MainController {
 
 	public void setSelectedSong(Song selectedSong) {
 		this.selectedSong = selectedSong;
+	}
+
+	public long getTimeLastRating() {
+		return timeLastRating;
+	}
+
+	public void setTimeLastRating(long timeLastRating) {
+		this.timeLastRating = timeLastRating;
+	}
+
+	public AccuracyRating getLastRating() {
+		return lastRating;
+	}
+
+	public void setLastRating(AccuracyRating lastRating) {
+		this.lastRating = lastRating;
+	}
+
+	public int getCombo() {
+		return combo;
+	}
+
+	public void setCombo(int combo) {
+		this.combo = combo;
 	}
 }

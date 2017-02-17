@@ -65,6 +65,8 @@ public class SongSelectDialog extends JDialog {
 			
 			controller.setSelectedSong(Song.songList.get(songName));
 			controller.playSong();
+			controller.getView().getStart().setVisible(false);
+			controller.getView().GetScoreText().setText("0");
 		}
 	}
 }

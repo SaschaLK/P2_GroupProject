@@ -1,6 +1,7 @@
 package game;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.util.List;
@@ -19,8 +20,10 @@ public class MyJPanel extends JPanel {
 	private int approachRate;
 	private TimingPoint timingPoint;
 
+	private MainController controller;
+	
 	public MyJPanel() {
-		repaint();
+		
 	}
 
 	@Override
@@ -39,8 +42,7 @@ public class MyJPanel extends JPanel {
 			for(float offset = timingPoint.getOffset(); offset < linesEnd; offset += timingPoint.getTimePerBeat() / 2) {
 				int delta = (int) ((offset - timeMillis) * pixelsPerMillisecond);
 				
-				
-				g.fillRect(0, -delta + 530, 230, 2);
+				g.fillRect(0, -delta + 530, 230, 1);
 			}
 			
 			g.setColor(Color.BLACK);
@@ -64,9 +66,19 @@ public class MyJPanel extends JPanel {
 
 		g.setColor(MainController.K4Down ? activeColor : inactiveColor);
 		g.fillRect(hitbox.getHitbox3().x, hitbox.getHitbox3().y, hitbox.getHitbox3().width, hitbox.getHitbox3().height);
+		
+		if(controller != null && controller.getLastRating() != null && System.currentTimeMillis() - controller.getTimeLastRating() <= 1000) {
+			Font font = new Font("Arial", 0, 24);
+			g.setFont(font);
+			g.setColor(Color.ORANGE);
+			
+			g.drawString(controller.getLastRating().name(), background.width / 2 - g.getFontMetrics().stringWidth(controller.getLastRating().name()) / 2, 200);
+			if(controller.getCombo() > 0) g.drawString(controller.getCombo()+"", background.width / 2 - g.getFontMetrics().stringWidth(controller.getCombo()+"") / 2, 230);
+		}
 	}
 
-	public void updatePanel(List<List<Note>> nlist, TimingPoint timingPoint, long time, int approachRate) {
+	public void updatePanel(MainController controller, List<List<Note>> nlist, TimingPoint timingPoint, long time, int approachRate) {
+		this.controller = controller;
 		this.notes = nlist;
 		this.timingPoint = timingPoint;
 		this.time = time;

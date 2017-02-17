@@ -157,4 +157,12 @@ public class Song {
 		
 		return laneList;
 	}
+
+	public List<Note> getNotes(int i) {
+		return list.get(i);
+	}
+
+	public int getNoteCount() {
+		return list.get(0).size() + list.get(1).size() + list.get(2).size() + list.get(3).size();
+	}
 }

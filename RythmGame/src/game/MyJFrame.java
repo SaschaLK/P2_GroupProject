@@ -2,11 +2,13 @@ package game;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -15,7 +17,7 @@ import javax.swing.JPanel;
 
 public class MyJFrame extends JFrame {
 	private MyJPanel panel = new MyJPanel();
-	private JLabel pscore = new JLabel("Your score:");
+	private JLabel pscore = new JLabel("");
 	private JMenuBar menu = new JMenuBar();
 	private JPanel panelmenu = new JPanel();
 	private JPanel menuGrid = new JPanel(new GridLayout(2,1));
@@ -23,8 +25,6 @@ public class MyJFrame extends JFrame {
 	private JButton mPlayer = new JButton("Multiplayer");
 
 	public MyJFrame() {
-	
-		
 		setLayout(new BorderLayout());
 		setJMenuBar(menu);
 		panelmenu.add(pscore);
@@ -33,6 +33,10 @@ public class MyJFrame extends JFrame {
 		menuGrid.add(mPlayer);
 		add(menuGrid, BorderLayout.NORTH);
 		add(panel, BorderLayout.CENTER);
+		
+		pscore.setFont(new Font("Arial", 0, 22));
+		
+		start.setSize(70, start.getHeight());
 
 		setSize(245, 650);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
@@ -42,14 +46,13 @@ public class MyJFrame extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 
-	public void updateView(List<List<Note>> list, TimingPoint timingPoint, long time, int approachRate) {
-		panel.updatePanel(list, timingPoint, time, approachRate);
+	public void updateView(MainController controller, List<List<Note>> list, TimingPoint timingPoint, long time, int approachRate) {
+		panel.updatePanel(controller, list, timingPoint, time, approachRate);
 		setVisible(true);
 	}
 
 	public void setScore(int score) {
-
-		pscore.setText("Your Score: " + score);
+		pscore.setText(score);
 
 		setVisible(true);
 	}
@@ -68,5 +71,8 @@ public class MyJFrame extends JFrame {
 		start.setText(title);
 		setVisible(true);
 		
+	}
+	public JLabel GetScoreText() {
+		return pscore;
 	}
 }
