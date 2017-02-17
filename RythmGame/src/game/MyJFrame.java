@@ -52,7 +52,7 @@ public class MyJFrame extends JFrame {
 	}
 
 	public void setScore(int score) {
-		pscore.setText(score);
+		pscore.setText(""+score);
 
 		setVisible(true);
 	}
