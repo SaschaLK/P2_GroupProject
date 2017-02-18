@@ -48,6 +48,8 @@ public class MyJPanel extends JPanel {
 			g.setColor(Color.BLACK);
 			for (int i = 0; i < notes.size(); i++) {
 				for(Note note : notes.get(i)) {
+					if(controller.GetHitNotes().contains(note)) continue;
+					
 					int delta = (int) ((note.getTime() - timeMillis) * pixelsPerMillisecond);
 					
 					g.fillRect(60 * i, -delta + 530 - note.getNote().height, note.getNote().width, note.getNote().height);

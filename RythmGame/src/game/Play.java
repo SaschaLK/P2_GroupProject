@@ -113,6 +113,8 @@ public class Play {
 		if(error <= 127 - (3 * controller.getHitDifficulty())) return AccuracyRating.GOOD; 
 		if(error <= 151 - (3 * controller.getHitDifficulty())) return AccuracyRating.BAD;
 		
+		if(error >= 188 - (3 * controller.getHitDifficulty()) * 2) return null;
+		
 		return AccuracyRating.MISS;
 	}
 	

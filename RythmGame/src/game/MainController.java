@@ -466,4 +466,8 @@ public class MainController {
 	public int getHitDifficulty() {
 		return difficulty;
 	}
+
+	public List<Note> GetHitNotes() {
+		return hitNotes;
+	}
 }
