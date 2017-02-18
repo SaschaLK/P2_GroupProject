@@ -1,8 +1,10 @@
 package game;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.util.List;
@@ -24,8 +26,19 @@ public class MyJFrame extends JFrame {
 	private JPanel menuGrid = new JPanel(new GridLayout(2,1));
 	private JButton start = new JButton("Play Game");
 	private JButton mPlayer = new JButton("Multiplayer");
+	
+	private float progress = 0.0f;
 
 	public MyJFrame() {
+		bottomMenu = new JPanel() {
+			public void paintComponent(Graphics g) {
+				super.paintComponent(g);
+				
+				g.setColor(Color.YELLOW);
+				g.fillRect(0, this.getHeight() - 10, (int) (this.getWidth() * progress), 10);
+			}
+		};
+		
 		setLayout(new BorderLayout());
 		setJMenuBar(menu);
 		topMenu.add(pscore);
@@ -100,5 +113,10 @@ public class MyJFrame extends JFrame {
 
 	public void setAccuracy(float accuracy) {
 		mLabel.setText(accuracy+"%");
+	}
+	
+	public void updateProgress(float progress) {
+		this.progress = progress;
+		this.bottomMenu.repaint();
 	}
 }

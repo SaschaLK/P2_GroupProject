@@ -207,6 +207,14 @@ public class MainController {
 
 	private void update() {
 		long time = System.currentTimeMillis() - songStartTime;
+
+		view.updateProgress(time / (float) selectedSong.getEndTime(play.getDifficulty()));
+		
+		if(time >= selectedSong.getEndTime(play.getDifficulty())) {
+			selectedSong.stop();
+			reset();
+			return;
+		}
 		
 		List<List<Note>> lanes = selectedSong.getNotes(play.getDifficulty(), time, approachRate);
 		
@@ -253,11 +261,12 @@ public class MainController {
 	}
 	
 	public void reset(){
-		hitNotes = new ArrayList<Note>();
-		lastRating = null;
-		
 		timer.stop();
 		selectedSong.stop();
+		
+		hitNotes = new ArrayList<Note>();
+		lastRating = null;
+		view.updateProgress(0.0f);
 		
 		view.GetScoreText().setVisible(false);
 		view.getStart().setVisible(true);

@@ -76,6 +76,8 @@ public class Song {
 	}
 	
 	public void stop() {
+		if(clip == null) return;
+		
 		clip.stop();
 		clip = null;
 	}
@@ -142,6 +144,12 @@ public class Song {
 		}
 		
 		return null;
+	}
+	
+	public long getEndTime(String difficulty) {
+		List<List<Note>> laneNotes = noteCollection.get(difficulty);
+		
+		return 5000 + Math.max(Math.max(laneNotes.get(0).get(laneNotes.get(0).size() - 1).getTime(), laneNotes.get(1).get(laneNotes.get(1).size() - 1).getTime()), Math.max(laneNotes.get(2).get(laneNotes.get(2).size() - 1).getTime(), laneNotes.get(3).get(laneNotes.get(3).size() - 1).getTime()));
 	}
 
 	public List<List<Note>> getCurrentSong(String difficultyName) {
