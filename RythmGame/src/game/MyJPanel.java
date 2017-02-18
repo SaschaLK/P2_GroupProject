@@ -73,7 +73,7 @@ public class MyJPanel extends JPanel {
 			g.setColor(Color.ORANGE);
 			
 			g.drawString(controller.getLastRating().name(), background.width / 2 - g.getFontMetrics().stringWidth(controller.getLastRating().name()) / 2, 200);
-			if(controller.getCombo() > 0) g.drawString(controller.getCombo()+"", background.width / 2 - g.getFontMetrics().stringWidth(controller.getCombo()+"") / 2, 230);
+			if(controller.getPlay().getCombo() > 0) g.drawString(controller.getPlay().getCombo()+"", background.width / 2 - g.getFontMetrics().stringWidth(controller.getPlay().getCombo()+"") / 2, 230);
 		}
 	}
 

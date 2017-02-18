@@ -1,7 +1,10 @@
 
 package game;
 
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
@@ -17,22 +20,27 @@ import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.Timer;
+import javax.swing.filechooser.FileFilter;
 
 public class MainController {
 	private MyJFrame view;
 	private Timer timer;
 
 	private boolean running=false;
+	private JComboBox<String> comboBox;
 	private JButton youChoseServer = new JButton("Server");
 	private JButton youChoseClient = new JButton("Client");
 	private JButton OkButton = new JButton("Okay");
 	private JDialog selectDialog;
 	private JDialog inputDialog;
+	private JDialog difficultyDialog;
 	private JTextField ipAdresseTextField = new JTextField("localhost", 20);
 	private JTextField portTextField = new JTextField("8888", 20);
 
@@ -45,15 +53,13 @@ public class MainController {
 	public static boolean K4Down = false;
 	
 	// Song
+	private Play play;
+	
 	private Song selectedSong;
 	private long songStartTime;
 	
 	private int approachRate = 8;
 	private int difficulty = 8;
-	
-	private double score = 0;
-	private int bonus = 0;
-	private int combo = 0;
 	
 	private AccuracyRating lastRating;
 	private long timeLastRating;
@@ -98,6 +104,7 @@ public class MainController {
 		});
 		OkButton.addActionListener(listener ->{
 			inputDialog.setVisible(false);
+			view.getMPlayer().setVisible(false);
 			try {
 				String ip = ipAdresseTextField.getText().trim();
 				int port = Integer.valueOf(portTextField.getText().trim());
@@ -110,12 +117,15 @@ public class MainController {
 				
 				if(areYouTheServer) {
 					socket = new ServerSocket(this, port);
+					view.getMLabel().setText("Waiting for player to connect...");
 				}
 				else {
 					socket = new ClientSocket(this, ip, port);
+					view.getMLabel().setText("Connecting to server...");
 				}
+				view.getMLabel().setVisible(true);
 			} catch (Exception e) {
-				// TODO: handle exception
+				e.printStackTrace();
 			}
 		});
 
@@ -198,20 +208,19 @@ public class MainController {
 	private void update() {
 		long time = System.currentTimeMillis() - songStartTime;
 		
-		List<List<Note>> lanes = selectedSong.getNotes(time, approachRate);
+		List<List<Note>> lanes = selectedSong.getNotes(play.getDifficulty(), time, approachRate);
 		
 		view.updateView(this, lanes, selectedSong.getCurrentTiming(time, true), time, approachRate);
 		
 		for(int i = 0; i < 4; i++) {
-			Note note = selectedSong.getNotes(i).stream().filter(x -> !hitNotes.contains(x)).findFirst().orElse(null);
+			Note note = selectedSong.getNotes(play.getDifficulty(), i).stream().filter(x -> !hitNotes.contains(x)).findFirst().orElse(null);
 			
 			if(note == null) continue;
 			
 			if(note.getTime() - (System.currentTimeMillis() - songStartTime) < -(151 - (3 * difficulty))) {
 				hitNotes.add(note);
 				
-				setCombo(0);
-				bonus = 0;
+				play.addHit(188 - (3 * difficulty));
 				
 				setLastRating(AccuracyRating.MISS);
 				setTimeLastRating(System.currentTimeMillis());
@@ -222,16 +231,18 @@ public class MainController {
 	private void noteHit(int i) {
 		Note note = null;
 		
-		for(Note n : selectedSong.getNotes(i)) {
+		for(Note n : selectedSong.getNotes(play.getDifficulty(), i)) {
 			if(!hitNotes.contains(n)) {
 				note = n;
 				break;
 			}
 		}
 		
-		long error = Math.abs((System.currentTimeMillis() - songStartTime) - note.getTime());
+		if(note == null) return;
 		
-		AccuracyRating acc = getAccuracyForError(error);
+		long error = (System.currentTimeMillis() - songStartTime) - note.getTime();
+		
+		AccuracyRating acc = play.addHit(error);
 		
 		if(acc == null) return;
 		
@@ -239,77 +250,11 @@ public class MainController {
 		
 		setLastRating(acc);
 		setTimeLastRating(System.currentTimeMillis());
-		
-		if(acc != AccuracyRating.MISS) {
-			setCombo(getCombo() + 1);
-		}
-		else {
-			setCombo(0);
-		}
-		
-		int hitValue = 0;
-		int hitBonus = 0;
-		int hitBonusValue = 0;
-		
-		switch(acc) {
-		case MARVELOUS:
-			hitValue = 320;
-			hitBonusValue = 32;
-			hitBonus = 2;
-			break;
-		case PERFECT:
-			hitValue = 300;
-			hitBonusValue = 16;
-			hitBonus = 1;
-			break;
-		case GREAT:
-			hitValue = 200;
-			hitBonusValue = 16;
-			hitBonus = -8;
-			break;
-		case GOOD:
-			hitValue = 100;
-			hitBonusValue = 8;
-			hitBonus = -24;
-			break;
-		case BAD:
-			hitValue = 50;
-			hitBonusValue = 4;
-			hitBonus = -44;
-			break;
-		case MISS:
-			hitValue = 0;
-			hitBonusValue = 0;
-			bonus = 0;
-		}
-		
-		bonus = bonus + hitBonus;
-		if(bonus > 100) bonus = 100;
-		if(bonus < 0) bonus = 0;
-		
-		double baseScore = ((1000000 * 0.5 / (float)selectedSong.getNoteCount()) * (hitValue / 320));
-		double bonusScore = ((1000000 * 0.5 / (float)selectedSong.getNoteCount()) * (hitBonusValue * Math.sqrt(bonus) / 320));
-		
-		if(baseScore + bonusScore > 0) {
-			score += baseScore + bonusScore;
-			
-			view.setScore((int) score);
-			socket.sendScore((int) score);
-		}
-	}
-	
-	private AccuracyRating getAccuracyForError(long error) {
-		if(error <= 16) return AccuracyRating.MARVELOUS; 
-		if(error <= 64 - (3 * difficulty)) return AccuracyRating.PERFECT; 
-		if(error <= 97 - (3 * difficulty)) return AccuracyRating.GREAT; 
-		if(error <= 127 - (3 * difficulty)) return AccuracyRating.GOOD; 
-		if(error <= 151 - (3 * difficulty)) return AccuracyRating.BAD; 
-		
-		return null;
 	}
 	
 	public void reset(){
 		hitNotes = new ArrayList<Note>();
+		lastRating = null;
 		
 		timer.stop();
 		selectedSong.stop();
@@ -317,12 +262,31 @@ public class MainController {
 		view.GetScoreText().setVisible(false);
 		view.getStart().setVisible(true);
 	}
+
+	public void startPlaying(String songName, String difficulty) {
+		if(socket != null && socket instanceof ServerSocket) {
+			socket.sendMapName(songName, difficulty);
+			socket.sendScore(0);
+		}
+		
+		this.getView().requestFocus();
+		
+		this.setSelectedSong(new Song(new File("./maps/"+songName+"/"+songName+".wav")));
+		
+		this.playSong(difficulty);
+		
+		this.getView().getStart().setVisible(false);
+		this.getView().GetScoreText().setVisible(true);
+		this.getView().GetScoreText().setText("0");
+		this.getView().getMPlayer().setVisible(false);
+		this.getView().getMLabel().setVisible(true);
+		this.getView().setAccuracy(play.getAccuracy());
+	}
 	
-	public void playSong() {
+	public void playSong(String difficulty) {
 		try {
 			hitNotes = new ArrayList<Note>();
-			score = 0;
-			setCombo(0);
+			play = new Play(this, selectedSong, difficulty);
 			
 			getSelectedSong().play(new LineListener() {
 				public void update(LineEvent event) {
@@ -332,7 +296,8 @@ public class MainController {
 					}
 				}
 			});
-			songStartTime = System.currentTimeMillis();
+			
+			songStartTime = System.currentTimeMillis() + 40;
 			timer.start();
 			running=true;
 			
@@ -346,7 +311,32 @@ public class MainController {
 	
 
 	public void openSongSelectionDialog() {
-		new SongSelectDialog(null, "Choose a song", true, this);
+		JFileChooser fileChooser = new JFileChooser();
+		
+		fileChooser.setFileFilter(new FileFilter() {
+			public String getDescription() {
+				return "WAV or MAP files lying next to each other";
+			}
+			
+			public boolean accept(File f) {
+				return f.getName().endsWith(".wav") || f.getName().endsWith(".map") || f.isDirectory();
+			}
+		});
+		
+		fileChooser.setCurrentDirectory(new File("./maps"));
+		
+		fileChooser.showOpenDialog(view);
+		
+		if(fileChooser.getSelectedFile() == null) return;
+		
+		selectedSong = new Song(fileChooser.getSelectedFile());
+		
+		if(selectedSong.getDifficulties().size() == 1) {
+			startPlaying(selectedSong.getName(), selectedSong.getDifficulties().stream().findFirst().get());
+		}
+		else {
+			startDifficultyDialog();
+		}
 	}
 	
 	public void selectMultiplayerRole() {
@@ -396,6 +386,37 @@ public class MainController {
 		
 		inputDialog.setVisible(true);
 	}
+	public void startDifficultyDialog(){
+		difficultyDialog = new JDialog(view, "Choose difficulty...", true);
+		difficultyDialog.setSize(200, 150);
+		difficultyDialog.setLocationRelativeTo(view);
+		difficultyDialog.setLayout(new GridLayout(2, 1));
+
+		comboBox = new JComboBox<String>();
+		
+		for(String difficulty : selectedSong.getDifficulties()) comboBox.addItem(difficulty);
+		
+		JButton button = new JButton("OK");
+		
+		button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				difficultyDialog.setVisible(false);
+				
+				startPlaying(selectedSong.getName(), (String) comboBox.getSelectedItem());
+			}
+		});
+		
+		JPanel panel1 = new JPanel(new GridBagLayout());
+		panel1.add(comboBox);
+
+		JPanel panel2 = new JPanel(new GridBagLayout());
+		panel2.add(button);
+		
+		difficultyDialog.add(panel1);
+		difficultyDialog.add(panel2);
+		
+		difficultyDialog.setVisible(true);
+	}
 
 	public MyJFrame getView() {
 		return view;
@@ -425,11 +446,24 @@ public class MainController {
 		this.lastRating = lastRating;
 	}
 
-	public int getCombo() {
-		return combo;
+	public void closeSocket() {
+		socket.close();
+		socket = null;
 	}
 
-	public void setCombo(int combo) {
-		this.combo = combo;
+	public boolean isPlaying() {
+		return running;
+	}
+
+	public ISocket getSocket() {
+		return socket;
+	}
+
+	public Play getPlay() {
+		return play;
+	}
+
+	public int getHitDifficulty() {
+		return difficulty;
 	}
 }

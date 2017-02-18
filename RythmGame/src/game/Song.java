@@ -3,55 +3,60 @@ package game;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineEvent;
-import javax.sound.sampled.LineEvent.Type;
 import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 public class Song {
-	// Songliste
-	private static final Song DECONSTRUCTION_STAR = new Song("Deconstruction Star");
-
-	public static HashMap<String, Song> songList;
-	
-	static {
-		songList = new HashMap<String, Song>();
-		
-		songList.put("Deconstruction Star", DECONSTRUCTION_STAR);
-	}
-	
 	// Audio
 	private AudioInputStream audioInputStream;
 	private Clip clip;
 	
 	// Beatmap info
-	private List<List<Note>> list;
+	private HashMap<String, List<List<Note>>> noteCollection;
 	private List<TimingPoint> timingPoints;
 	
 	// Datei Info
 	private String fileName;
-	private File file;
+	private Map<String, File> difficulties;
 
-	public Song(String fileName) {
-		this.fileName = fileName;
-		file = new File(fileName+".map");
+	public Song(File songFile) {
+		this.fileName = songFile.getName().substring(0, songFile.getName().length() - 4).split(" \\[")[0];
 		
-		list = new ArrayList<List<Note>>();
+		difficulties = new HashMap<String, File>();
 		
-		// add lists for lanes
-		list.add(new ArrayList<Note>());
-		list.add(new ArrayList<Note>());
-		list.add(new ArrayList<Note>());
-		list.add(new ArrayList<Note>());
+		noteCollection = new HashMap<String, List<List<Note>>>();
+		
+		File[] fileList = new File(songFile.getParent()).listFiles(new FilenameFilter() {
+			public boolean accept(File dir, String name) {
+				return name.startsWith(fileName) && name.endsWith(".map");
+			}
+		});
+		
+		for(File file : fileList) {
+			difficulties.put(file.getName().split("\\[")[1].split("\\]")[0], file);
+			
+			List<List<Note>> laneList = new ArrayList<List<Note>>();
+			
+			// add lists for lanes
+			laneList.add(new ArrayList<Note>());
+			laneList.add(new ArrayList<Note>());
+			laneList.add(new ArrayList<Note>());
+			laneList.add(new ArrayList<Note>());
+			
+			noteCollection.put(file.getName().split("\\[")[1].split("\\]")[0], laneList);
+		}
 		
 		timingPoints = new ArrayList<TimingPoint>();
 		
@@ -60,7 +65,7 @@ public class Song {
 	
 	public void play(LineListener listener) {
 		try {
-			audioInputStream = AudioSystem.getAudioInputStream(new File(fileName+".wav").getAbsoluteFile());
+			audioInputStream = AudioSystem.getAudioInputStream(new File("./maps/"+fileName+"/"+fileName+".wav").getAbsoluteFile());
 			clip = AudioSystem.getClip();
 			clip.addLineListener(listener);
 			clip.open(audioInputStream);
@@ -76,52 +81,54 @@ public class Song {
 	}
 	
 	public void readSongNotes() {
-		boolean readingTiming = false;
-		boolean readingNotes = false;
-		
-		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
-			String line = "";
+		for(String difficulty : noteCollection.keySet()) {
+			boolean readingTiming = false;
+			boolean readingNotes = false;
 			
-			while((line = br.readLine()) != null) {
-				if(readingTiming) {
-					if(line.isEmpty()) {
-						readingTiming = false;
-					}
-					else {
-						String[] data = line.split(",");
-						
-						timingPoints.add(new TimingPoint(Integer.valueOf(data[0]), Float.valueOf(data[1]), data[6].equals("0")));
-					}
-				}
-				else {
-					if(line.equals("[TimingPoints]")) {
-						readingTiming = true;
-					}
-				}
+			try(BufferedReader br = new BufferedReader(new FileReader(difficulties.get(difficulty)))) {
+				String line = "";
 				
-				if(readingNotes) {
-					if(line.isEmpty()) {
-						readingNotes = false;
+				while((line = br.readLine()) != null) {
+					if(readingTiming) {
+						if(line.isEmpty()) {
+							readingTiming = false;
+						}
+						else {
+							String[] data = line.split(",");
+							
+							timingPoints.add(new TimingPoint(Integer.valueOf(data[0]), Float.valueOf(data[1]), data[6].equals("0")));
+						}
 					}
 					else {
-						String[] data = line.split(",");
-						
-						Note note = new Note(Integer.valueOf(data[2]));
-						
-						if(data[0].equals("64")) list.get(0).add(note);
-						if(data[0].equals("192")) list.get(1).add(note);
-						if(data[0].equals("320")) list.get(2).add(note);
-						if(data[0].equals("448")) list.get(3).add(note);
+						if(line.equals("[TimingPoints]")) {
+							readingTiming = true;
+						}
+					}
+					
+					if(readingNotes) {
+						if(line.trim().isEmpty()) {
+							readingNotes = false;
+						}
+						else {
+							String[] data = line.split(",");
+							
+							Note note = new Note(Integer.valueOf(data[2]));
+							
+							if(data[0].equals("64")) noteCollection.get(difficulty).get(0).add(note);
+							if(data[0].equals("192")) noteCollection.get(difficulty).get(1).add(note);
+							if(data[0].equals("320")) noteCollection.get(difficulty).get(2).add(note);
+							if(data[0].equals("448")) noteCollection.get(difficulty).get(3).add(note);
+						}
+					}
+					else {
+						if(line.equals("[HitObjects]")) {
+							readingNotes = true;
+						}
 					}
 				}
-				else {
-					if(line.equals("[HitObjects]")) {
-						readingNotes = true;
-					}
-				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 	
@@ -137,11 +144,11 @@ public class Song {
 		return null;
 	}
 
-	public List<List<Note>> getCurrentSong() {
-		return list;
+	public List<List<Note>> getCurrentSong(String difficultyName) {
+		return noteCollection.get(difficultyName);
 	}
 
-	public List<List<Note>> getNotes(long time, int approachRate) {
+	public List<List<Note>> getNotes(String difficultyName, long time, int approachRate) {
 		long startShow = time - 50;
 		long endShow = time + ((10 - approachRate) * 150 + 450);
 		
@@ -150,7 +157,7 @@ public class Song {
 		for(int i = 0; i < 4; i++) {
 			List<Note> noteList = new ArrayList<Note>();
 			
-			for(Note note : list.get(i)) {
+			for(Note note : noteCollection.get(difficultyName).get(i)) {
 				if(note.getTime() >= startShow && note.getTime() <= endShow) {
 					noteList.add(note);
 				}
@@ -162,15 +169,23 @@ public class Song {
 		return laneList;
 	}
 
-	public List<Note> getNotes(int i) {
-		return list.get(i);
+	public List<Note> getNotes(String difficultyName, int i) {
+		return noteCollection.get(difficultyName).get(i);
 	}
 
-	public int getNoteCount() {
-		return list.get(0).size() + list.get(1).size() + list.get(2).size() + list.get(3).size();
+	public int getNoteCount(String difficultyName) {
+		return noteCollection.get(difficultyName).get(0).size() + noteCollection.get(difficultyName).get(1).size() + noteCollection.get(difficultyName).get(2).size() + noteCollection.get(difficultyName).get(3).size();
 	}
 
 	public boolean isPlaying() {
 		return clip.isRunning();
+	}
+
+	public String getName() {
+		return fileName;
+	}
+
+	public Set<String> getDifficulties() {
+		return difficulties.keySet();
 	}
 }

@@ -5,14 +5,18 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.io.*;
 
 public class ClientSocket implements ISocket {
 	private int serverScore = 0;
-	private int myScore;
+
+	private volatile ByteBuffer sendBuffer = ByteBuffer.allocate(1024);
 	
-	private boolean shouldSend;
+	private byte[] remainingBuffer = new byte[0];
 	
 	private boolean shouldClose;
 	
@@ -31,6 +35,11 @@ public class ClientSocket implements ISocket {
 					
 					System.out.println("Connected to server!");
 					
+					controller.getView().getMLabel().setText("You connected! Waiting for the host...");
+					controller.getView().getStart().setEnabled(false);
+
+					ByteBuffer buffer = ByteBuffer.allocate(1024);
+					
 					while(!shouldClose) {
 						selector.select();
 						
@@ -38,37 +47,87 @@ public class ClientSocket implements ISocket {
 						
 						for(SelectionKey key : keys) {
 							if(key.isReadable()) {
-								ByteBuffer buffer = ByteBuffer.allocate(4);
-								socket.read(buffer);
+								int read = socket.read(buffer) + remainingBuffer.length;
 								
-								serverScore = byteArrayToInt(buffer.array());
-								controller.getView().setRemoteScore(serverScore);
+								int readCursor = 0;
+								byte[] data = ByteBuffer.allocate(read).put(remainingBuffer).put((ByteBuffer) buffer.flip()).array();
 								
-								System.out.println("Score: "+serverScore);
+								buffer.clear();
+								
+								while(read > 0) {
+									int msgLength = byteArrayToInt(Arrays.copyOfRange(data, readCursor, readCursor += 4));
+									
+									if(read - readCursor < msgLength) {
+										readCursor -= 4;
+										
+										remainingBuffer = Arrays.copyOfRange(data, readCursor, read);
+										break;
+									}
+									
+									int msgId = byteArrayToInt(Arrays.copyOfRange(data, readCursor, readCursor += 4));
+									
+									if(msgId == 0) {
+										serverScore = byteArrayToInt(Arrays.copyOfRange(data, readCursor, readCursor += 4));
+										
+										controller.getView().setRemoteScore(serverScore);
+									}
+									if(msgId == 1) {
+										String mapName = new String(Arrays.copyOfRange(data, readCursor, readCursor += msgLength - 4));
+										
+										controller.startPlaying(mapName.split(":")[0], mapName.split(":")[1]);
+									}
+								}
 							}
 							
-							if(key.isWritable() && shouldSend) {
-								shouldSend = false;
-								
-								ByteBuffer buffer = ByteBuffer.allocate(4);
-								buffer.putInt(myScore); // TODO: send score like this in a loop
-								buffer.flip();
-								socket.write(buffer);
+							synchronized(sendBuffer) {
+								if(key.isWritable() && sendBuffer.position() > 0) {
+									
+									sendBuffer.flip();
+									
+									socket.write(sendBuffer);
+									
+									sendBuffer.clear();
+								}
 							}
 						}
 					}
 					
 					socket.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					if(!controller.isPlaying()) {
+						controller.getView().getMLabel().setText("Connection failed! Try again later!");
+					}
+					else {
+						controller.getView().getMPlayer().setText(controller.getView().getMPlayer().getText().split(" \\| ")[0]);
+					}
+					
+					controller.closeSocket();
+					
+					new Timer().schedule(new TimerTask() {
+						public void run() {
+							controller.getView().getMLabel().setText("");
+							
+							if(!controller.isPlaying()) {
+								controller.getView().getMLabel().setVisible(false);
+								controller.getView().getMPlayer().setVisible(true);
+							}
+						}
+					}, 5000);
 				}
 			}
 		}).start();
 	}
 	
 	public void sendScore(int score) {
-		myScore = score;
-		shouldSend = true;
+		synchronized(sendBuffer) {
+			sendBuffer.putInt(8);
+			sendBuffer.putInt(0);
+			sendBuffer.putInt(score);
+		}
+	}
+
+	public void sendMapName(String name, String difficulty) {
+		throw new IllegalStateException();
 	}
 	
 	public void close() {
