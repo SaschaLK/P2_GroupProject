@@ -43,7 +43,7 @@ public class Play {
 		}
 		
 		hitCounts.put(acc, hitCounts.containsKey(acc) ? hitCounts.get(acc) + 1 : 1);
-		System.out.println(hitCounts.get(AccuracyRating.MISS));
+		
 		if(acc != AccuracyRating.MISS) {
 			combo++;
 		}
@@ -113,7 +113,7 @@ public class Play {
 		if(error <= 127 - (3 * controller.getHitDifficulty())) return AccuracyRating.GOOD; 
 		if(error <= 151 - (3 * controller.getHitDifficulty())) return AccuracyRating.BAD;
 		
-		if(error >= 188 - (3 * controller.getHitDifficulty()) * 2) return null;
+		if(error >= (188 - (3 * controller.getHitDifficulty())) * 2) return null;
 		
 		return AccuracyRating.MISS;
 	}
