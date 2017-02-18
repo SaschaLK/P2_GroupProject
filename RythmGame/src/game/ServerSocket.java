@@ -11,10 +11,13 @@ import java.io.*;
 
 class ServerSocket implements ISocket {
 	private int clientScore;
+	private int myScore;
+	
+	private boolean shouldSend;
 	
 	private boolean shouldClose;
 	
-	public ServerSocket(int port) {
+	public ServerSocket(MainController controller, int port) {
 		Thread thread = new Thread(new Runnable() {
 			public void run() {
 				try{
@@ -55,17 +58,19 @@ class ServerSocket implements ISocket {
 								
 								if(read > 0) {
 									clientScore = byteArrayToInt(buffer.array());
+									controller.getView().setRemoteScore(clientScore);
 									
 									System.out.println("Score: "+clientScore);
 								}
 							}
 							// Sending the score of all other clients to all clients
-							if(key.isWritable()) {
-								System.out.println("Sending data...");
+							if(key.isWritable() && shouldSend) {
+								shouldSend = false;
+								
 								SocketChannel client = (SocketChannel) key.channel();
 								ByteBuffer buffer = ByteBuffer.allocate(4);
 								
-								buffer.putInt(666); // TODO: send score here
+								buffer.putInt(myScore);
 								buffer.flip();
 								
 								client.write(buffer);
@@ -82,6 +87,11 @@ class ServerSocket implements ISocket {
 		});
 		
 		thread.start();
+	}
+	
+	public void sendScore(int score) {
+		myScore = score;
+		shouldSend = true;
 	}
 	
 	public void close() {

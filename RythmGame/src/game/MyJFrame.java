@@ -5,10 +5,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
-import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -48,13 +46,15 @@ public class MyJFrame extends JFrame {
 
 	public void updateView(MainController controller, List<List<Note>> list, TimingPoint timingPoint, long time, int approachRate) {
 		panel.updatePanel(controller, list, timingPoint, time, approachRate);
-		setVisible(true);
 	}
 
 	public void setScore(int score) {
-		pscore.setText(""+score);
-
-		setVisible(true);
+		if(pscore.getText().contains("|")) {
+			pscore.setText(score + " | " + pscore.getText().split(" \\| ")[1]);
+		}
+		else {
+			pscore.setText(""+score);
+		}
 	}
 
 	public JButton getStart() {
@@ -74,5 +74,9 @@ public class MyJFrame extends JFrame {
 	}
 	public JLabel GetScoreText() {
 		return pscore;
+	}
+
+	public void setRemoteScore(int remoteScore) {
+		pscore.setText(pscore.getText().split(" \\| ")[0] + " | " + remoteScore);
 	}
 }

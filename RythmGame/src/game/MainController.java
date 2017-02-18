@@ -1,24 +1,19 @@
 
 package game;
 
-import java.awt.Color;
 import java.awt.GridLayout;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.rmi.server.ServerCloneException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
+import javax.sound.sampled.LineEvent.Type;
+import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JButton;
@@ -33,16 +28,13 @@ public class MainController {
 	private Timer timer;
 
 	private boolean running=false;
-	private int color = 0;
-	private Thread t = new Thread();
-	private SongSelectDialog ssDialog;
 	private JButton youChoseServer = new JButton("Server");
 	private JButton youChoseClient = new JButton("Client");
 	private JButton OkButton = new JButton("Okay");
 	private JDialog selectDialog;
 	private JDialog inputDialog;
-	private JTextField ipAdresseTextField = new JTextField("",20);
-	private JTextField portTextField = new JTextField("",20);
+	private JTextField ipAdresseTextField = new JTextField("localhost", 20);
+	private JTextField portTextField = new JTextField("8888", 20);
 
 	private File file;
 	
@@ -117,10 +109,10 @@ public class MainController {
 				if(socket != null) socket.close();
 				
 				if(areYouTheServer) {
-					socket = new ServerSocket(port);
+					socket = new ServerSocket(this, port);
 				}
 				else {
-					socket = new ClientSocket(ip, port);
+					socket = new ClientSocket(this, ip, port);
 				}
 			} catch (Exception e) {
 				// TODO: handle exception
@@ -133,36 +125,40 @@ public class MainController {
 		// Sollte in der Lage sein 2 Noten zu erfassen Thread
 		view.addKeyListener(new KeyListener() {
 			public void keyPressed(KeyEvent e) {
-					if (e.getKeyCode() == KeyEvent.VK_D) {
-						K1Down = true;
-						playHitsound();
-						
-						noteHit(0);
-					}
-					if (e.getKeyCode() == KeyEvent.VK_F) {
-						K2Down = true;
-						playHitsound();
-						
-						noteHit(1);
-					}
-					if (e.getKeyCode() == KeyEvent.VK_J) {
-						K3Down = true;
-						playHitsound();
-						
-						noteHit(2);
-					}
-					if (e.getKeyCode() == KeyEvent.VK_K) {
-						K4Down = true;
-						playHitsound();
-						
-						noteHit(3);
-					}
+				if (e.getKeyCode() == KeyEvent.VK_D && !K1Down) {
+					K1Down = true;
+					playHitsound();
+					
+					noteHit(0);
+				}
+				if (e.getKeyCode() == KeyEvent.VK_F && !K2Down) {
+					K2Down = true;
+					playHitsound();
+					
+					noteHit(1);
+				}
+				if (e.getKeyCode() == KeyEvent.VK_J && !K3Down) {
+					K3Down = true;
+					playHitsound();
+					
+					noteHit(2);
+				}
+				if (e.getKeyCode() == KeyEvent.VK_K && !K4Down) {
+					K4Down = true;
+					playHitsound();
+					
+					noteHit(3);
+				}
 				
 				if(e.getKeyCode() == KeyEvent.VK_F3) {
 					approachRate++;
 				}
 				if(e.getKeyCode() == KeyEvent.VK_F4) {
 					approachRate--;
+				}
+				if(e.getKeyCode() == KeyEvent.VK_ESCAPE && running) {
+					running = false;
+					reset();
 				}
 			}
 
@@ -294,9 +290,12 @@ public class MainController {
 		double baseScore = ((1000000 * 0.5 / (float)selectedSong.getNoteCount()) * (hitValue / 320));
 		double bonusScore = ((1000000 * 0.5 / (float)selectedSong.getNoteCount()) * (hitBonusValue * Math.sqrt(bonus) / 320));
 		
-		score += baseScore + bonusScore;
-		
-		view.setScore((int) score);
+		if(baseScore + bonusScore > 0) {
+			score += baseScore + bonusScore;
+			
+			view.setScore((int) score);
+			socket.sendScore((int) score);
+		}
 	}
 	
 	private AccuracyRating getAccuracyForError(long error) {
@@ -311,10 +310,12 @@ public class MainController {
 	
 	public void reset(){
 		hitNotes = new ArrayList<Note>();
+		
 		timer.stop();
 		selectedSong.stop();
-		running=false;
-		setStartButton();
+		
+		view.GetScoreText().setVisible(false);
+		view.getStart().setVisible(true);
 	}
 	
 	public void playSong() {
@@ -323,7 +324,14 @@ public class MainController {
 			score = 0;
 			setCombo(0);
 			
-			getSelectedSong().play();
+			getSelectedSong().play(new LineListener() {
+				public void update(LineEvent event) {
+					if(event.getType() == Type.STOP) {
+						running = false;
+						reset();
+					}
+				}
+			});
 			songStartTime = System.currentTimeMillis();
 			timer.start();
 			running=true;
@@ -338,7 +346,7 @@ public class MainController {
 	
 
 	public void openSongSelectionDialog() {
-		ssDialog = new SongSelectDialog(null, "Choose a song", true, this);
+		new SongSelectDialog(null, "Choose a song", true, this);
 	}
 	
 	public void selectMultiplayerRole() {
@@ -391,18 +399,6 @@ public class MainController {
 
 	public MyJFrame getView() {
 		return view;
-	}
-	
-	public void setStartButton(){
-		if(running){
-			String a = "stop";
-		view.setButton(a);
-		}
-		else{
-			String b = "Play Game";
-			view.setButton(b);
-			
-		}	
 	}
 
 	public Song getSelectedSong() {

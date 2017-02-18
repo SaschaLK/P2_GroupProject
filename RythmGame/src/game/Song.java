@@ -11,6 +11,9 @@ import java.util.List;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
+import javax.sound.sampled.LineEvent.Type;
+import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -55,10 +58,11 @@ public class Song {
 		readSongNotes();
 	}
 	
-	public void play() {
+	public void play(LineListener listener) {
 		try {
 			audioInputStream = AudioSystem.getAudioInputStream(new File(fileName+".wav").getAbsoluteFile());
 			clip = AudioSystem.getClip();
+			clip.addLineListener(listener);
 			clip.open(audioInputStream);
 			clip.start();
 		} catch (LineUnavailableException | IOException | UnsupportedAudioFileException e) {
@@ -164,5 +168,9 @@ public class Song {
 
 	public int getNoteCount() {
 		return list.get(0).size() + list.get(1).size() + list.get(2).size() + list.get(3).size();
+	}
+
+	public boolean isPlaying() {
+		return clip.isRunning();
 	}
 }
