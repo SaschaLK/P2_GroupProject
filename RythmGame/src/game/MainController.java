@@ -245,6 +245,13 @@ public class MainController {
 		for(int i = 0; i < 4; i++) {
 			Note note = selectedSong.getNotes(play.getDifficulty(), i).stream().filter(x -> !hitNotes.contains(x)).findFirst().orElse(null);
 
+			if(sliderStartRatings[i] != null && KDown[i] && note != null && note instanceof NoteSlider && ((NoteSlider) note).containsTime(time)) {
+				if(sliderTick) {
+					play.incrementCombo();
+					setTimeLastRating(System.currentTimeMillis());
+				}
+			}
+			
 			if(auto && ((note != null && note instanceof NoteSlider && (System.currentTimeMillis() - songStartTime) - (note.getTime() + ((NoteSlider)note).getDuration()) >= 0 && sliderStartRatings[i] != null) || (System.currentTimeMillis() - KDownTime[i] >= 70 && sliderStartRatings[i] == null))) {
 				KDown[i] = false;
 
@@ -264,13 +271,6 @@ public class MainController {
 			}
 			
 			if(note == null) continue;
-			
-			if(sliderStartRatings[i] != null && KDown[i] && note instanceof NoteSlider && ((NoteSlider) note).containsTime(time)) {
-				if(sliderTick) {
-					play.incrementCombo();
-					setTimeLastRating(System.currentTimeMillis());
-				}
-			}
 			
 			if(auto && note.getTime() - (System.currentTimeMillis() - songStartTime) <= 0) {
 				if(note instanceof NoteSlider && sliderStartRatings[i] != null) continue; 
