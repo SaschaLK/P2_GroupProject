@@ -404,6 +404,12 @@ public class MainController {
 		timer.stop();
 		selectedSong.stop();
 		
+		try {
+			Thread.sleep(5);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
 		hitNotes = new ArrayList<Note>();
 		noteCount = new int[4];
 		lastRating = null;
