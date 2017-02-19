@@ -72,9 +72,11 @@ public class ClientSocket implements ISocket {
 										controller.getView().setRemoteScore(serverScore);
 									}
 									if(msgId == 1) {
-										String mapName = new String(Arrays.copyOfRange(data, readCursor, readCursor += msgLength - 4));
+										String mapInfo = new String(Arrays.copyOfRange(data, readCursor, readCursor += msgLength - 4));
 										
-										controller.startPlaying(mapName.split(":")[0], mapName.split(":")[1]);
+										controller.setAuto(mapInfo.split(":")[2].contains("auto"));
+										
+										controller.startPlaying(mapInfo.split(":")[0], mapInfo.split(":")[1]);
 									}
 								}
 							}
@@ -101,6 +103,8 @@ public class ClientSocket implements ISocket {
 						controller.getView().getMPlayer().setText(controller.getView().getMPlayer().getText().split(" \\| ")[0]);
 					}
 					
+					controller.getView().getStart().setEnabled(true);
+					
 					controller.closeSocket();
 					
 					new Timer().schedule(new TimerTask() {
@@ -126,7 +130,7 @@ public class ClientSocket implements ISocket {
 		}
 	}
 
-	public void sendMapName(String name, String difficulty) {
+	public void sendMapInfo(String name, String difficulty, String mods) {
 		throw new IllegalStateException();
 	}
 	

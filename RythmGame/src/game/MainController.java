@@ -46,8 +46,6 @@ public class MainController {
 	private JDialog difficultyDialog;
 	private JTextField ipAdresseTextField = new JTextField("localhost", 20);
 	private JTextField portTextField = new JTextField("8888", 20);
-
-	private File file;
 	
 	// Keys
 	public static boolean[] KDown = new boolean[4];
@@ -66,8 +64,6 @@ public class MainController {
 	
 	private AccuracyRating lastRating;
 	private long timeLastRating;
-	
-	private Clip hitsound;
 	
 	private List<Note> hitNotes;
 	
@@ -136,9 +132,6 @@ public class MainController {
 				e.printStackTrace();
 			}
 		});
-
-
-		file = new File("test.txt");
 
 		// Sollte in der Lage sein 2 Noten zu erfassen Thread
 		view.addKeyListener(new KeyListener() {
@@ -401,13 +394,19 @@ public class MainController {
 		
 		view.GetScoreText().setVisible(false);
 		view.getStart().setVisible(true);
+		
+		if(socket != null) {
+			view.getMLabel().setVisible(false);
+			view.getMPlayer().setVisible(true);
+		}
 	}
 
 	public void startPlaying(String songName, String difficulty) {
 		if(socket != null && socket instanceof ServerSocket) {
-			socket.sendMapName(songName, difficulty);
-			socket.sendScore(0);
+			socket.sendMapInfo(songName, difficulty, auto ? "auto" : "");
 		}
+
+		socket.sendScore(0);
 		
 		this.getView().requestFocus();
 		
@@ -618,5 +617,9 @@ public class MainController {
 
 	public List<Note> GetHitNotes() {
 		return hitNotes;
+	}
+
+	public void setAuto(boolean auto) {
+		this.auto = auto;
 	}
 }

@@ -5,5 +5,5 @@ public interface ISocket {
 
 	void sendScore(int score);
 	
-	void sendMapName(String name, String difficulty);
+	void sendMapInfo(String name, String difficulty, String mods);
 }

@@ -81,6 +81,7 @@ class ServerSocket implements ISocket {
 									if(msgId == 0) {
 										clientScore = byteArrayToInt(Arrays.copyOfRange(data, readCursor, readCursor += 4));
 										
+										System.out.println(clientScore);
 										controller.getView().setRemoteScore(clientScore);
 									}
 								}
@@ -107,10 +108,9 @@ class ServerSocket implements ISocket {
 						controller.getView().getMLabel().setText("Connection failed! Try again later!");
 					}
 					else {
+						System.out.println("test");
 						controller.getView().getMPlayer().setText(controller.getView().getMPlayer().getText().split(" \\| ")[0]);
 					}
-					
-					controller.closeSocket();
 					
 					new Timer().schedule(new TimerTask() {
 						public void run() {
@@ -137,11 +137,11 @@ class ServerSocket implements ISocket {
 		}
 	}
 	
-	public void sendMapName(String name, String difficulty) {
+	public void sendMapInfo(String name, String difficulty, String mods) {
 		synchronized(sendBuffer) {
-			sendBuffer.putInt(name.length() + difficulty.length() + 4 + 1);
+			sendBuffer.putInt(name.length() + difficulty.length() + mods.length() + 2 + 4);
 			sendBuffer.putInt(1);
-			sendBuffer.put((name+":"+difficulty).getBytes());
+			sendBuffer.put((name+":"+difficulty+":"+mods).getBytes());
 		}
 	}
 	
