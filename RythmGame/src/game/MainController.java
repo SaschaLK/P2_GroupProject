@@ -266,7 +266,10 @@ public class MainController {
 			if(note == null) continue;
 			
 			if(sliderStartRatings[i] != null && KDown[i] && note instanceof NoteSlider && ((NoteSlider) note).containsTime(time)) {
-				if(sliderTick) play.incrementCombo();
+				if(sliderTick) {
+					play.incrementCombo();
+					setTimeLastRating(System.currentTimeMillis());
+				}
 			}
 			
 			if(auto && note.getTime() - (System.currentTimeMillis() - songStartTime) <= 0) {
