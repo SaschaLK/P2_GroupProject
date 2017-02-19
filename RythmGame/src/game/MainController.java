@@ -186,16 +186,17 @@ public class MainController {
 	}
 
 	public void startPlay(String songName, String difficulty, Mod...mods) {
+		// Initialize Play
+		play = new Play(this, new Song(new File("./maps/"+songName+"/"+songName+".wav")), difficulty, mods);
+		
 		// If Multiplayer send info
 		if(socket != null) {
-			if(socket instanceof ServerSocket) socket.sendMapInfo(songName, difficulty, auto ? "auto" : "");
+			if(socket instanceof ServerSocket) socket.sendMapInfo(songName, difficulty, play.isModActive(Mod.AUTO) ? "auto" : "");
 
 			socket.sendScore(0);
 		}
 		
 		// Start play
-		play = new Play(this, new Song(new File("./maps/"+songName+"/"+songName+".wav")), difficulty, mods);
-		
 		play.start(this);
 		
 		timer.start();
@@ -351,10 +352,6 @@ public class MainController {
 
 	public Play getPlay() {
 		return play;
-	}
-
-	public void setAuto(boolean auto) {
-		this.auto = auto;
 	}
 
 	public boolean isRunning() {

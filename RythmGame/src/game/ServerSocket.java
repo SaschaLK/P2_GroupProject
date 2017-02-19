@@ -1,6 +1,7 @@
 package game;
 
 import java.net.*;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -108,9 +109,12 @@ class ServerSocket implements ISocket {
 						controller.getView().getMLabel().setText("Connection failed! Try again later!");
 					}
 					else {
-						System.out.println("test");
 						controller.getView().getMPlayer().setText(controller.getView().getMPlayer().getText().split(" \\| ")[0]);
 					}
+					
+					controller.getView().getStart().setEnabled(true);
+					
+					controller.closeSocket();
 					
 					new Timer().schedule(new TimerTask() {
 						public void run() {
@@ -131,17 +135,27 @@ class ServerSocket implements ISocket {
 	
 	public void sendScore(int score) {
 		synchronized(sendBuffer) {
-			sendBuffer.putInt(8);
-			sendBuffer.putInt(0);
-			sendBuffer.putInt(score);
+			try {
+				sendBuffer.putInt(8);
+				sendBuffer.putInt(0);
+				sendBuffer.putInt(score);
+			} catch(BufferOverflowException e) {
+				sendBuffer.clear();
+				sendScore(score);
+			}
 		}
 	}
 	
 	public void sendMapInfo(String name, String difficulty, String mods) {
 		synchronized(sendBuffer) {
-			sendBuffer.putInt(name.length() + difficulty.length() + mods.length() + 2 + 4);
-			sendBuffer.putInt(1);
-			sendBuffer.put((name+":"+difficulty+":"+mods).getBytes());
+			try {
+				sendBuffer.putInt(name.length() + difficulty.length() + mods.length() + 2 + 4);
+				sendBuffer.putInt(1);
+				sendBuffer.put((name+":"+difficulty+":"+mods).getBytes());
+			} catch(BufferOverflowException e) {
+				sendBuffer.clear();
+				sendMapInfo(name, difficulty, mods);
+			}
 		}
 	}
 	

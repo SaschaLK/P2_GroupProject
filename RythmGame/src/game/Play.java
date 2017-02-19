@@ -226,7 +226,7 @@ public class Play {
 		return error < 0 && (getAccuracyForError(error) == AccuracyRating.MISS || getAccuracyForError(error) == null);
 	}
 
-	private boolean isModActive(Mod m) {
+	public boolean isModActive(Mod m) {
 		for(Mod mod : mods) if(m == mod) return true;
 		
 		return false;

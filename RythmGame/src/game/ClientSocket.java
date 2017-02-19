@@ -1,6 +1,7 @@
 package game;
 
 import java.net.*;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -74,9 +75,7 @@ public class ClientSocket implements ISocket {
 									if(msgId == 1) {
 										String mapInfo = new String(Arrays.copyOfRange(data, readCursor, readCursor += msgLength - 4));
 										
-										controller.setAuto(mapInfo.contains("auto"));
-										
-										controller.startPlay(mapInfo.split(":")[0], mapInfo.split(":")[1]);
+										controller.startPlay(mapInfo.split(":")[0], mapInfo.split(":")[1], mapInfo.contains("auto") ? Mod.AUTO : null);
 									}
 								}
 							}
@@ -124,9 +123,16 @@ public class ClientSocket implements ISocket {
 	
 	public void sendScore(int score) {
 		synchronized(sendBuffer) {
-			sendBuffer.putInt(8);
-			sendBuffer.putInt(0);
-			sendBuffer.putInt(score);
+			synchronized(sendBuffer) {
+				try {
+					sendBuffer.putInt(8);
+					sendBuffer.putInt(0);
+					sendBuffer.putInt(score);
+				} catch(BufferOverflowException e) {
+					sendBuffer.clear();
+					sendScore(score);
+				}
+			}
 		}
 	}
 
