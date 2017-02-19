@@ -402,11 +402,11 @@ public class MainController {
 	}
 
 	public void startPlaying(String songName, String difficulty) {
-		if(socket != null && socket instanceof ServerSocket) {
-			socket.sendMapInfo(songName, difficulty, auto ? "auto" : "");
-		}
+		if(socket != null) {
+			if(socket instanceof ServerSocket) socket.sendMapInfo(songName, difficulty, auto ? "auto" : "");
 
-		socket.sendScore(0);
+			socket.sendScore(0);
+		}
 		
 		this.getView().requestFocus();
 		
