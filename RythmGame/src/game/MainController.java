@@ -71,6 +71,8 @@ public class MainController {
 	
 	private int[] noteCount = new int[4];
 	
+	private Clip[] keyHitsounds = new Clip[4];
+	
 	// Mods
 	private boolean auto = false;
 	
@@ -140,25 +142,25 @@ public class MainController {
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_D && !KDown[0] && !auto) {
 					KDown[0] = true;
-					playHitsound();
+					playHitsound(0);
 					
 					noteHit(0, true);
 				}
 				if (e.getKeyCode() == KeyEvent.VK_F && !KDown[1] && !auto) {
 					KDown[1] = true;
-					playHitsound();
+					playHitsound(1);
 					
 					noteHit(1, true);
 				}
 				if (e.getKeyCode() == KeyEvent.VK_J && !KDown[2] && !auto) {
 					KDown[2] = true;
-					playHitsound();
+					playHitsound(2);
 					
 					noteHit(2, true);
 				}
 				if (e.getKeyCode() == KeyEvent.VK_K && !KDown[3] && !auto) {
 					KDown[3] = true;
-					playHitsound();
+					playHitsound(3);
 					
 					noteHit(3, true);
 				}
@@ -203,16 +205,23 @@ public class MainController {
 			}
 		});
 
+		for(int i = 0; i < 4; i++) {
+			try {
+				Clip hitsound = AudioSystem.getClip();
+				hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
+				keyHitsounds[i] = hitsound;
+			} catch (LineUnavailableException | IOException | UnsupportedAudioFileException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
-	public void playHitsound() {
-		try {
-			Clip hitsound = AudioSystem.getClip();
-			hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
-			hitsound.start();
-		} catch (LineUnavailableException | IOException | UnsupportedAudioFileException e) {
-			e.printStackTrace();
+	public void playHitsound(int i) {
+		if(keyHitsounds[i].isRunning()) {
+			keyHitsounds[i].stop();
 		}
+		keyHitsounds[i].setFramePosition(0);
+		keyHitsounds[i].start();
 	}
 
 	private void update() {
@@ -232,8 +241,8 @@ public class MainController {
 		
 		boolean sliderTick = false;
 		
-		if(timeLastSliderTick + selectedSong.getCurrentTiming(time, true).getTimePerBeat() / 2.0D <= time) {
-			timeLastSliderTick += selectedSong.getCurrentTiming(time, true).getTimePerBeat() / 2.0D;
+		if(timeLastSliderTick + selectedSong.getCurrentTiming(time, true).getTimePerBeat() / 4.0D <= time) {
+			timeLastSliderTick += selectedSong.getCurrentTiming(time, true).getTimePerBeat() / 4.0D;
 			sliderTick = true;
 		}
 		
@@ -277,7 +286,7 @@ public class MainController {
 				
 				KDown[i] = true;
 				KDownTime[i] = System.currentTimeMillis();
-				playHitsound();
+				playHitsound(i);
 				
 				long error = note.getTime() - (System.currentTimeMillis() - songStartTime);
 				
