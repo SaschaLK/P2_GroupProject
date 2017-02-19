@@ -69,6 +69,8 @@ public class MainController {
 	
 	private long timeLastSliderTick;
 	
+	private int[] noteCount = new int[4];
+	
 	// Mods
 	private boolean auto = false;
 	
@@ -236,7 +238,11 @@ public class MainController {
 		}
 		
 		for(int i = 0; i < 4; i++) {
-			Note note = selectedSong.getNotes(play.getDifficulty(), i).stream().filter(x -> !hitNotes.contains(x)).findFirst().orElse(null);
+			Note note = null;
+			
+			try {
+				note = selectedSong.getNotes(play.getDifficulty(), i).get(noteCount[i]);
+			} catch (Exception e) {}
 
 			if(sliderStartRatings[i] != null && KDown[i] && note != null && note instanceof NoteSlider && ((NoteSlider) note).containsTime(time)) {
 				if(sliderTick) {
@@ -254,7 +260,8 @@ public class MainController {
 					hitNotes.add(note);
 						
 					play.addSliderHit(sliderStartRatings[i], acc);
-	
+					noteCount[i]++;
+					
 					setLastRating(acc);
 						
 					sliderStartRatings[i] = null;
@@ -280,6 +287,7 @@ public class MainController {
 					hitNotes.add(note);
 					
 					acc = play.addHit(error);
+					noteCount[i]++;
 				}
 				else {
 					acc = play.getAccuracyForError(error);
@@ -304,6 +312,7 @@ public class MainController {
 					hitNotes.add(note);
 				
 					AccuracyRating acc = play.addSliderHit(sliderStartRatings[i], AccuracyRating.MISS);
+					noteCount[i]++;
 					
 					sliderStartRatings[i] = null;
 					
@@ -314,6 +323,7 @@ public class MainController {
 				hitNotes.add(note);
 				
 				AccuracyRating acc = play.addHit(188 - (3 * difficulty));
+				noteCount[i]++;
 				
 				setLastRating(acc);
 			}
@@ -323,12 +333,9 @@ public class MainController {
 	private void noteHit(int i, boolean isDownKey) {
 		Note note = null;
 		
-		for(Note n : selectedSong.getNotes(play.getDifficulty(), i)) {
-			if(!hitNotes.contains(n)) {
-				note = n;
-				break;
-			}
-		}
+		try {
+			note = selectedSong.getNotes(play.getDifficulty(), i).get(noteCount[i]);
+		} catch (Exception e) {}
 		
 		if(note == null) return;
 		
@@ -348,8 +355,6 @@ public class MainController {
 				}
 				
 				sliderStartRatings[i] = acc;
-				
-				setLastRating(acc);
 			}
 			else if(!isDownKey) {
 				long error = (System.currentTimeMillis() - songStartTime) - (note.getTime() + ((NoteSlider)note).getDuration());
@@ -360,6 +365,7 @@ public class MainController {
 					hitNotes.add(note);
 					
 					play.addSliderHit(sliderStartRatings[i], acc);
+					noteCount[i]++;
 
 					setLastRating(acc);
 					
@@ -375,6 +381,7 @@ public class MainController {
 			long error = (System.currentTimeMillis() - songStartTime) - note.getTime();
 			
 			AccuracyRating acc = play.addHit(error);
+			noteCount[i]++;
 			
 			if(acc == null) return;
 			
@@ -389,6 +396,7 @@ public class MainController {
 		selectedSong.stop();
 		
 		hitNotes = new ArrayList<Note>();
+		noteCount = new int[0];
 		lastRating = null;
 		view.updateProgress(0.0f);
 		
