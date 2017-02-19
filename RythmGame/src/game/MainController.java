@@ -403,7 +403,7 @@ public class MainController {
 		view.GetScoreText().setVisible(false);
 		view.getStart().setVisible(true);
 		
-		if(socket != null) {
+		if(socket == null) {
 			view.getMLabel().setVisible(false);
 			view.getMPlayer().setVisible(true);
 		}
