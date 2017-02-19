@@ -158,7 +158,7 @@ public class Song {
 
 	public List<List<Note>> getNotes(String difficultyName, long time, int approachRate) {
 		long startShow = time - 50;
-		long endShow = time + ((10 - approachRate) * 150 + 450);
+		long endShow = time + ((10 - approachRate) * 150 + 450) + 50;
 		
 		List<List<Note>> laneList = new ArrayList<List<Note>>();
 		

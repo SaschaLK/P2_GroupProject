@@ -15,14 +15,6 @@ public class Note {
 		return note;
 	}
 
-	public void setNote(int x) {
-		note.y = note.y + x;
-	}
-
-	public void moveNote() {
-		note.y = note.y + 1;
-	}
-
 	public int getTime() {
 		return time;
 	}

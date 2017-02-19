@@ -12,7 +12,7 @@ public class Play {
 	private final String difficulty;
 	
 	private double score = 0;
-	private int bonus = 0;
+	private float bonus = 100;
 	private int combo = 0;
 	
 	private double averageError = 0;
@@ -51,9 +51,9 @@ public class Play {
 			combo = 0;
 		}
 		
-		int hitValue = 0;
-		int hitBonus = 0;
-		int hitBonusValue = 0;
+		float hitValue = 0;
+		float hitBonus = 0;
+		float hitBonusValue = 0;
 		
 		switch(acc) {
 		case MARVELOUS:
@@ -63,7 +63,7 @@ public class Play {
 			break;
 		case PERFECT:
 			hitValue = 300;
-			hitBonusValue = 16;
+			hitBonusValue = 32;
 			hitBonus = 1;
 			break;
 		case GREAT:
@@ -91,16 +91,16 @@ public class Play {
 		if(bonus > 100) bonus = 100;
 		if(bonus < 0) bonus = 0;
 		
-		double baseScore = ((1000000 * 0.5 / (float)song.getNoteCount(difficulty)) * (hitValue / 320));
-		double bonusScore = ((1000000 * 0.5 / (float)song.getNoteCount(difficulty)) * (hitBonusValue * Math.sqrt(bonus) / 320));
+		double baseScore = ((1000000 * 0.5f / (float)song.getNoteCount(difficulty)) * (hitValue / (float) 320));
+		double bonusScore = ((1000000 * 0.5f / (float)song.getNoteCount(difficulty)) * (hitBonusValue * Math.sqrt(bonus) / (float) 320));
 		
 		if(baseScore + bonusScore > 0) {
 			score += baseScore + bonusScore;
 			
-			if(controller.getSocket() != null) controller.getSocket().sendScore((int) score);
+			if(controller.getSocket() != null) controller.getSocket().sendScore((int) Math.round(score));
 		}
 
-		controller.getView().setScore((int) score);
+		controller.getView().setScore((int) Math.round(score));
 		controller.getView().setAccuracy(getAccuracy());
 		
 		return acc;
@@ -113,9 +113,9 @@ public class Play {
 		if(error <= 127 - (3 * controller.getHitDifficulty())) return AccuracyRating.GOOD; 
 		if(error <= 151 - (3 * controller.getHitDifficulty())) return AccuracyRating.BAD;
 		
-		if(error >= (188 - (3 * controller.getHitDifficulty())) * 2) return null;
+		if(error <= (188 - (3 * controller.getHitDifficulty()))) return AccuracyRating.MISS;
 		
-		return AccuracyRating.MISS;
+		return null;
 	}
 	
 	public float getAccuracy() {

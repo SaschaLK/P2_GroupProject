@@ -228,9 +228,9 @@ public class MainController {
 			if(note.getTime() - (System.currentTimeMillis() - songStartTime) < -(151 - (3 * difficulty))) {
 				hitNotes.add(note);
 				
-				play.addHit(188 - (3 * difficulty));
+				AccuracyRating acc = play.addHit(188 - (3 * difficulty));
 				
-				setLastRating(AccuracyRating.MISS);
+				setLastRating(acc);
 				setTimeLastRating(System.currentTimeMillis());
 			}
 		}
