@@ -396,7 +396,7 @@ public class MainController {
 		selectedSong.stop();
 		
 		hitNotes = new ArrayList<Note>();
-		noteCount = new int[0];
+		noteCount = new int[4];
 		lastRating = null;
 		view.updateProgress(0.0f);
 		
