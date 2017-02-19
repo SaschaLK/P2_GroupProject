@@ -7,6 +7,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -17,10 +19,9 @@ import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 
 public class MyJFrame extends JFrame {
-	private MyJPanel panel = new MyJPanel();
+	private PlayfieldPanel panel = new PlayfieldPanel();
 	private JLabel pscore = new JLabel("");
 	private JLabel mLabel = new JLabel("");
-	private JMenuBar menu = new JMenuBar();
 	private JPanel topMenu = new JPanel();
 	private JPanel bottomMenu = new JPanel();
 	private JPanel menuGrid = new JPanel(new GridLayout(2,1));
@@ -39,8 +40,9 @@ public class MyJFrame extends JFrame {
 			}
 		};
 		
+		this.setResizable(false);
+		
 		setLayout(new BorderLayout());
-		setJMenuBar(menu);
 		topMenu.add(pscore);
 		topMenu.add(start);
 		bottomMenu.add(mPlayer);
@@ -59,7 +61,7 @@ public class MyJFrame extends JFrame {
 		
 		start.setSize(70, start.getHeight());
 
-		setSize(245, 650);
+		setSize(236, 700);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		this.setLocation(dim.width / 2 - this.getSize().width / 2, dim.height / 3 - this.getSize().height / 2);
 
@@ -83,13 +85,15 @@ public class MyJFrame extends JFrame {
 	public JButton getStart() {
 		return start;
 	}
+	
 	public JButton getMPlayer() {
 		return mPlayer;
 	}
 
-	public MyJPanel getPanel() {
+	public PlayfieldPanel getPanel() {
 		return panel;
 	}
+	
 	public void setButton(String title){
 		start.setText(title);
 		setVisible(true);

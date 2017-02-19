@@ -113,8 +113,15 @@ public class Song {
 						}
 						else {
 							String[] data = line.split(",");
+
+							Note note = null;
 							
-							Note note = new Note(Integer.valueOf(data[2]));
+							if(data[3].equals("128")) {
+								note = new NoteSlider(Integer.valueOf(data[2]), Integer.valueOf(data[5].split(":")[0]) - Integer.valueOf(data[2]));
+							}
+							else {
+								note = new Note(Integer.valueOf(data[2]));
+							}
 							
 							if(data[0].equals("64")) noteCollection.get(difficulty).get(0).add(note);
 							if(data[0].equals("192")) noteCollection.get(difficulty).get(1).add(note);
@@ -167,6 +174,9 @@ public class Song {
 			
 			for(Note note : noteCollection.get(difficultyName).get(i)) {
 				if(note.getTime() >= startShow && note.getTime() <= endShow) {
+					noteList.add(note);
+				}
+				else if(note instanceof NoteSlider && (note.getTime() + ((NoteSlider)note).getDuration() >= startShow && note.getTime() + ((NoteSlider)note).getDuration() <= endShow || ((NoteSlider)note).containsTime(endShow))) {
 					noteList.add(note);
 				}
 			}

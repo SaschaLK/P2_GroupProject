@@ -20,6 +20,7 @@ import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -27,6 +28,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.Timer;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 
 public class MainController {
@@ -47,10 +50,10 @@ public class MainController {
 	private File file;
 	
 	// Keys
-	public static boolean K1Down = false;
-	public static boolean K2Down = false;
-	public static boolean K3Down = false;
-	public static boolean K4Down = false;
+	public static boolean[] KDown = new boolean[4];
+	public static long[] KDownTime = new long[4];
+	
+	private AccuracyRating[] sliderStartRatings = new AccuracyRating[4];
 	
 	// Song
 	private Play play;
@@ -67,6 +70,11 @@ public class MainController {
 	private Clip hitsound;
 	
 	private List<Note> hitNotes;
+	
+	private long timeLastSliderTick;
+	
+	// Mods
+	private boolean auto = false;
 	
 	// Server
 	private boolean areYouTheServer = false;
@@ -135,29 +143,29 @@ public class MainController {
 		// Sollte in der Lage sein 2 Noten zu erfassen Thread
 		view.addKeyListener(new KeyListener() {
 			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_D && !K1Down) {
-					K1Down = true;
+				if (e.getKeyCode() == KeyEvent.VK_D && !KDown[0] && !auto) {
+					KDown[0] = true;
 					playHitsound();
 					
-					noteHit(0);
+					noteHit(0, true);
 				}
-				if (e.getKeyCode() == KeyEvent.VK_F && !K2Down) {
-					K2Down = true;
+				if (e.getKeyCode() == KeyEvent.VK_F && !KDown[1] && !auto) {
+					KDown[1] = true;
 					playHitsound();
 					
-					noteHit(1);
+					noteHit(1, true);
 				}
-				if (e.getKeyCode() == KeyEvent.VK_J && !K3Down) {
-					K3Down = true;
+				if (e.getKeyCode() == KeyEvent.VK_J && !KDown[2] && !auto) {
+					KDown[2] = true;
 					playHitsound();
 					
-					noteHit(2);
+					noteHit(2, true);
 				}
-				if (e.getKeyCode() == KeyEvent.VK_K && !K4Down) {
-					K4Down = true;
+				if (e.getKeyCode() == KeyEvent.VK_K && !KDown[3] && !auto) {
+					KDown[3] = true;
 					playHitsound();
 					
-					noteHit(3);
+					noteHit(3, true);
 				}
 				
 				if(e.getKeyCode() == KeyEvent.VK_F3) {
@@ -173,17 +181,25 @@ public class MainController {
 			}
 
 			public void keyReleased(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_D) {
-					K1Down = false;
+				if (e.getKeyCode() == KeyEvent.VK_D && KDown[0] && !auto) {
+					KDown[0] = false;
+					
+					if(sliderStartRatings[0] != null) noteHit(0, false);
 				}
-				if (e.getKeyCode() == KeyEvent.VK_F) {
-					K2Down = false;
+				if (e.getKeyCode() == KeyEvent.VK_F && KDown[1] && !auto) {
+					KDown[1] = false;
+					
+					if(sliderStartRatings[1] != null) noteHit(1, false);
 				}
-				if (e.getKeyCode() == KeyEvent.VK_J) {
-					K3Down = false;
+				if (e.getKeyCode() == KeyEvent.VK_J && KDown[2] && !auto) {
+					KDown[2] = false;
+					
+					if(sliderStartRatings[2] != null) noteHit(2, false);
 				}
-				if (e.getKeyCode() == KeyEvent.VK_K) {
-					K4Down = false;
+				if (e.getKeyCode() == KeyEvent.VK_K && KDown[3] && !auto) {
+					KDown[3] = false;
+					
+					if(sliderStartRatings[3] != null) noteHit(3, false);
 				}
 			}
 
@@ -199,9 +215,8 @@ public class MainController {
 			Clip hitsound = AudioSystem.getClip();
 			hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
 			hitsound.start();
-		} catch (LineUnavailableException | IOException | UnsupportedAudioFileException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		} catch (LineUnavailableException | IOException | UnsupportedAudioFileException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -220,23 +235,96 @@ public class MainController {
 		
 		view.updateView(this, lanes, selectedSong.getCurrentTiming(time, true), time, approachRate);
 		
+		boolean sliderTick = false;
+		
+		if(timeLastSliderTick + selectedSong.getCurrentTiming(time, true).getTimePerBeat() / 2.0D <= time) {
+			timeLastSliderTick += selectedSong.getCurrentTiming(time, true).getTimePerBeat() / 2.0D;
+			sliderTick = true;
+		}
+		
 		for(int i = 0; i < 4; i++) {
 			Note note = selectedSong.getNotes(play.getDifficulty(), i).stream().filter(x -> !hitNotes.contains(x)).findFirst().orElse(null);
+
+			if(auto && ((note != null && note instanceof NoteSlider && (System.currentTimeMillis() - songStartTime) - (note.getTime() + ((NoteSlider)note).getDuration()) >= 0 && sliderStartRatings[i] != null) || (System.currentTimeMillis() - KDownTime[i] >= 70 && sliderStartRatings[i] == null))) {
+				KDown[i] = false;
+
+				if(note instanceof NoteSlider && sliderStartRatings[i] != null) {
+					AccuracyRating acc = play.getAccuracyForError(Math.abs((System.currentTimeMillis() - songStartTime) - (note.getTime() + ((NoteSlider)note).getDuration())));
+					
+					hitNotes.add(note);
+						
+					play.addSliderHit(sliderStartRatings[i], acc);
+	
+					setLastRating(acc);
+						
+					sliderStartRatings[i] = null;
+					
+					continue;
+				}
+			}
 			
 			if(note == null) continue;
 			
-			if(note.getTime() - (System.currentTimeMillis() - songStartTime) < -(151 - (3 * difficulty))) {
+			if(sliderStartRatings[i] != null && KDown[i] && note instanceof NoteSlider && ((NoteSlider) note).containsTime(time)) {
+				if(sliderTick) play.incrementCombo();
+			}
+			
+			if(auto && note.getTime() - (System.currentTimeMillis() - songStartTime) <= 0) {
+				if(note instanceof NoteSlider && sliderStartRatings[i] != null) continue; 
+				
+				KDown[i] = true;
+				KDownTime[i] = System.currentTimeMillis();
+				playHitsound();
+				
+				long error = note.getTime() - (System.currentTimeMillis() - songStartTime);
+				
+				AccuracyRating acc = null;
+				
+				if(!(note instanceof NoteSlider)) {
+					hitNotes.add(note);
+					
+					acc = play.addHit(error);
+				}
+				else {
+					acc = play.getAccuracyForError(error);
+					
+					sliderStartRatings[i] = acc;
+					
+					play.incrementCombo();
+				}
+				
+				setLastRating(acc);
+				continue;
+			}
+			
+			// handle missed notes
+			if(note instanceof NoteSlider) {
+				if(note.getTime() - (System.currentTimeMillis() - songStartTime) < -(151 - (3 * difficulty)) && sliderStartRatings[i] == null) {
+					sliderStartRatings[i] = AccuracyRating.MISS;
+					
+					play.sliderBreak();
+				}
+				if(note.getTime() + ((NoteSlider) note).getDuration() - (System.currentTimeMillis() - songStartTime) < -(151 - (3 * difficulty))) {
+					hitNotes.add(note);
+				
+					AccuracyRating acc = play.addSliderHit(sliderStartRatings[i], AccuracyRating.MISS);
+					
+					sliderStartRatings[i] = null;
+					
+					setLastRating(acc);
+				}
+			}
+			else if(note.getTime() - (System.currentTimeMillis() - songStartTime) < -(151 - (3 * difficulty))) {
 				hitNotes.add(note);
 				
 				AccuracyRating acc = play.addHit(188 - (3 * difficulty));
 				
 				setLastRating(acc);
-				setTimeLastRating(System.currentTimeMillis());
 			}
 		}
 	}
 	
-	private void noteHit(int i) {
+	private void noteHit(int i, boolean isDownKey) {
 		Note note = null;
 		
 		for(Note n : selectedSong.getNotes(play.getDifficulty(), i)) {
@@ -248,16 +336,56 @@ public class MainController {
 		
 		if(note == null) return;
 		
-		long error = (System.currentTimeMillis() - songStartTime) - note.getTime();
-		
-		AccuracyRating acc = play.addHit(error);
-		
-		if(acc == null) return;
-		
-		hitNotes.add(note);
-		
-		setLastRating(acc);
-		setTimeLastRating(System.currentTimeMillis());
+		if(note instanceof NoteSlider) {
+			if(sliderStartRatings[i] == null) {
+				long error = (System.currentTimeMillis() - songStartTime) - note.getTime();
+				
+				AccuracyRating acc = play.getAccuracyForError(Math.abs(error));
+				
+				if(acc == null) return;
+				
+				if(acc != AccuracyRating.MISS) {
+					play.incrementCombo();
+				}
+				else {
+					play.sliderBreak();
+				}
+				
+				sliderStartRatings[i] = acc;
+				
+				setLastRating(acc);
+			}
+			else if(!isDownKey) {
+				long error = (System.currentTimeMillis() - songStartTime) - (note.getTime() + ((NoteSlider)note).getDuration());
+				
+				AccuracyRating acc = play.getAccuracyForError(Math.abs(error));
+				
+				if(acc != null) {
+					hitNotes.add(note);
+					
+					play.addSliderHit(sliderStartRatings[i], acc);
+
+					setLastRating(acc);
+					
+					sliderStartRatings[i] = null;
+				}
+				else if(error < 0) {
+					sliderStartRatings[i] = AccuracyRating.BAD;
+					play.sliderBreak();
+				}
+			}
+		}
+		else {
+			long error = (System.currentTimeMillis() - songStartTime) - note.getTime();
+			
+			AccuracyRating acc = play.addHit(error);
+			
+			if(acc == null) return;
+			
+			hitNotes.add(note);
+			
+			setLastRating(acc);
+		}
 	}
 	
 	public void reset(){
@@ -324,11 +452,11 @@ public class MainController {
 		
 		fileChooser.setFileFilter(new FileFilter() {
 			public String getDescription() {
-				return "WAV or MAP files lying next to each other";
+				return "mapped WAV files";
 			}
 			
 			public boolean accept(File f) {
-				return f.getName().endsWith(".wav") || f.getName().endsWith(".map") || f.isDirectory();
+				return f.getName().endsWith(".wav") || f.isDirectory();
 			}
 		});
 		
@@ -399,7 +527,7 @@ public class MainController {
 		difficultyDialog = new JDialog(view, "Choose difficulty...", true);
 		difficultyDialog.setSize(200, 150);
 		difficultyDialog.setLocationRelativeTo(view);
-		difficultyDialog.setLayout(new GridLayout(2, 1));
+		difficultyDialog.setLayout(new GridLayout(3, 1));
 
 		comboBox = new JComboBox<String>();
 		
@@ -415,14 +543,27 @@ public class MainController {
 			}
 		});
 		
+		JCheckBox checkBox = new JCheckBox();
+		checkBox.setText("Auto");
+		checkBox.setSelected(auto);
+		checkBox.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				auto = !auto;
+			}
+		});
+		
 		JPanel panel1 = new JPanel(new GridBagLayout());
 		panel1.add(comboBox);
 
 		JPanel panel2 = new JPanel(new GridBagLayout());
-		panel2.add(button);
+		panel2.add(checkBox);
+		
+		JPanel panel3 = new JPanel(new GridBagLayout());
+		panel3.add(button);
 		
 		difficultyDialog.add(panel1);
 		difficultyDialog.add(panel2);
+		difficultyDialog.add(panel3);
 		
 		difficultyDialog.setVisible(true);
 	}
@@ -453,6 +594,7 @@ public class MainController {
 
 	public void setLastRating(AccuracyRating lastRating) {
 		this.lastRating = lastRating;
+		setTimeLastRating(System.currentTimeMillis());
 	}
 
 	public void closeSocket() {

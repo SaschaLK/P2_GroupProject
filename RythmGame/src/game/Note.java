@@ -7,7 +7,7 @@ public class Note {
 	private int time;
 
 	public Note(int time) {
-		note = new Rectangle(0, 0, 50, 15);
+		note = new Rectangle(0, 0, 50, 20);
 		this.time = time;
 	}
 

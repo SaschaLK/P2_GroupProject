@@ -30,11 +30,18 @@ public class Play {
 		hitCounts.put(AccuracyRating.MISS, 0);
 	}
 	
+	public AccuracyRating addSliderHit(AccuracyRating accStart, AccuracyRating accEnd) {
+		if(accStart == AccuracyRating.MISS ^ accEnd == AccuracyRating.MISS) return addHit(AccuracyRating.BAD);
+		
+		return addHit(accStart.hitValue >= accEnd.hitValue ? accEnd : accStart);
+	}
+	
 	public AccuracyRating addHit(long error) {
 		AccuracyRating acc = getAccuracyForError(Math.abs(error));
 		
 		if(acc == null) return null;
 		
+		// TODO slider hits arent counted yet
 		if(getTotalHits() == 0) {
 			averageError = error;
 		}
@@ -42,6 +49,10 @@ public class Play {
 			averageError = (averageError * getTotalHits() + error) / (double) (getTotalHits() + 1);
 		}
 		
+		return addHit(acc);
+	}
+	
+	public AccuracyRating addHit(AccuracyRating acc) {
 		hitCounts.put(acc, hitCounts.containsKey(acc) ? hitCounts.get(acc) + 1 : 1);
 		
 		if(acc != AccuracyRating.MISS) {
@@ -106,7 +117,7 @@ public class Play {
 		return acc;
 	}
 	
-	private AccuracyRating getAccuracyForError(long error) {
+	public AccuracyRating getAccuracyForError(long error) {
 		if(error <= 16) return AccuracyRating.MARVELOUS; 
 		if(error <= 64 - (3 * controller.getHitDifficulty())) return AccuracyRating.PERFECT; 
 		if(error <= 97 - (3 * controller.getHitDifficulty())) return AccuracyRating.GREAT; 
@@ -149,5 +160,14 @@ public class Play {
 
 	public String getDifficulty() {
 		return difficulty;
+	}
+
+	public void sliderBreak() {
+		combo = 0;
+		bonus = 0;
+	}
+
+	public void incrementCombo() {
+		combo++;
 	}
 }
