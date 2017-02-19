@@ -74,7 +74,7 @@ public class ClientSocket implements ISocket {
 									if(msgId == 1) {
 										String mapInfo = new String(Arrays.copyOfRange(data, readCursor, readCursor += msgLength - 4));
 										
-										controller.setAuto(mapInfo.split(":")[2].contains("auto"));
+										controller.setAuto(mapInfo.contains("auto"));
 										
 										controller.startPlaying(mapInfo.split(":")[0], mapInfo.split(":")[1]);
 									}
