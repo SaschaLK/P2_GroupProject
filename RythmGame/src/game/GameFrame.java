@@ -15,7 +15,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-public class MyJFrame extends JFrame {
+public class GameFrame extends JFrame {
 	private PlayfieldPanel panel = new PlayfieldPanel();
 	private JLabel pscore = new JLabel("");
 	private JLabel mLabel = new JLabel("");
@@ -27,11 +27,12 @@ public class MyJFrame extends JFrame {
 	
 	private float progress = 0.0f;
 
-	public MyJFrame() {
+	public GameFrame() {
 		bottomMenu = new JPanel() {
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				
+				// Draw progress bar
 				g.setColor(Color.YELLOW);
 				g.fillRect(0, this.getHeight() - 10, (int) (this.getWidth() * progress), 10);
 			}
@@ -55,8 +56,6 @@ public class MyJFrame extends JFrame {
 		pscore.setVisible(false);
 		
 		pscore.setFont(new Font("Arial", 0, 22));
-		
-		start.setSize(70, start.getHeight());
 
 		setSize(236, 700);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
@@ -66,8 +65,8 @@ public class MyJFrame extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 
-	public void updateView(MainController controller, List<List<Note>> list, TimingPoint timingPoint, long time, int approachRate) {
-		panel.updatePanel(controller, list, timingPoint, time, approachRate);
+	public void updateView(List<List<Note>> list, TimingPoint timingPoint, long time, int approachRate) {
+		panel.updatePanel(list, timingPoint, time, approachRate);
 	}
 
 	public void setScore(int score) {
@@ -119,5 +118,9 @@ public class MyJFrame extends JFrame {
 	public void updateProgress(float progress) {
 		this.progress = progress;
 		this.bottomMenu.repaint();
+	}
+	
+	public void setController(MainController controller) {
+		panel.setController(controller);
 	}
 }

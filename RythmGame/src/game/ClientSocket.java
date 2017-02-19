@@ -76,7 +76,7 @@ public class ClientSocket implements ISocket {
 										
 										controller.setAuto(mapInfo.contains("auto"));
 										
-										controller.startPlaying(mapInfo.split(":")[0], mapInfo.split(":")[1]);
+										controller.startPlay(mapInfo.split(":")[0], mapInfo.split(":")[1]);
 									}
 								}
 							}

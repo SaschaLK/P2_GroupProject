@@ -8,17 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineEvent;
-import javax.sound.sampled.LineEvent.Type;
-import javax.sound.sampled.LineListener;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -33,7 +23,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 
 public class MainController {
-	private MyJFrame view;
+	private GameFrame view;
 	private Timer timer;
 
 	private boolean running=false;
@@ -48,30 +38,10 @@ public class MainController {
 	private JTextField portTextField = new JTextField("8888", 20);
 	
 	// Keys
-	public static boolean[] KDown = new boolean[4];
-	public static long[] KDownTime = new long[4];
-	
-	private AccuracyRating[] sliderStartRatings = new AccuracyRating[4];
+	public Key[] keys = new Key[4];
 	
 	// Song
 	private Play play;
-	
-	private Song selectedSong;
-	private long songStartTime;
-	
-	private int approachRate = 8;
-	private int difficulty = 8;
-	
-	private AccuracyRating lastRating;
-	private long timeLastRating;
-	
-	private List<Note> hitNotes;
-	
-	private long timeLastSliderTick;
-	
-	private int[] noteCount = new int[4];
-	
-	private Clip[] keyHitsounds = new Clip[4];
 	
 	// Mods
 	private boolean auto = false;
@@ -80,12 +50,20 @@ public class MainController {
 	private boolean areYouTheServer = false;
 	private ISocket socket;
 
-	public MainController(MyJFrame view) {
-
+	public MainController(GameFrame view) {
 		this.view = view;
+		
+		view.setController(this);
+		
+		keys[0] = new Key(0, KeyEvent.VK_D);
+		keys[1] = new Key(1, KeyEvent.VK_F);
+		keys[2] = new Key(2, KeyEvent.VK_J);
+		keys[3] = new Key(3, KeyEvent.VK_K);
+		
 		timer = new Timer(1, listener -> update());
+		
 		view.getStart().addActionListener(listener -> {
-			if(!running){
+			if(!isRunning()){
 				openSongSelectionDialog();
 			}
 			else{				
@@ -94,7 +72,7 @@ public class MainController {
 
 		});
 		view.getMPlayer().addActionListener(listener -> {
-			if(!running){
+			if(!isRunning()){
 				selectMultiplayerRole();
 			}
 			else{				
@@ -137,66 +115,36 @@ public class MainController {
 			}
 		});
 
-		// Sollte in der Lage sein 2 Noten zu erfassen Thread
 		view.addKeyListener(new KeyListener() {
 			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_D && !KDown[0] && !auto) {
-					KDown[0] = true;
-					playHitsound(0);
-					
-					noteHit(0, true);
-				}
-				if (e.getKeyCode() == KeyEvent.VK_F && !KDown[1] && !auto) {
-					KDown[1] = true;
-					playHitsound(1);
-					
-					noteHit(1, true);
-				}
-				if (e.getKeyCode() == KeyEvent.VK_J && !KDown[2] && !auto) {
-					KDown[2] = true;
-					playHitsound(2);
-					
-					noteHit(2, true);
-				}
-				if (e.getKeyCode() == KeyEvent.VK_K && !KDown[3] && !auto) {
-					KDown[3] = true;
-					playHitsound(3);
-					
-					noteHit(3, true);
+				for(Key key : keys) {
+					if (e.getKeyCode() == key.getKeyId() && !key.isDown() && !auto) {
+						key.setDown(true);
+						key.playHitsound();
+						
+						play.keyHit(key);
+					}
 				}
 				
 				if(e.getKeyCode() == KeyEvent.VK_F3) {
-					approachRate++;
+					play.setApproachRate(play.getApproachRate() + 1);
 				}
 				if(e.getKeyCode() == KeyEvent.VK_F4) {
-					approachRate--;
+					play.setApproachRate(play.getApproachRate() - 1);
 				}
-				if(e.getKeyCode() == KeyEvent.VK_ESCAPE && running) {
-					running = false;
+				if(e.getKeyCode() == KeyEvent.VK_ESCAPE && isRunning()) {
+					setRunning(false);
 					reset();
 				}
 			}
 
 			public void keyReleased(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_D && KDown[0] && !auto) {
-					KDown[0] = false;
-					
-					if(sliderStartRatings[0] != null) noteHit(0, false);
-				}
-				if (e.getKeyCode() == KeyEvent.VK_F && KDown[1] && !auto) {
-					KDown[1] = false;
-					
-					if(sliderStartRatings[1] != null) noteHit(1, false);
-				}
-				if (e.getKeyCode() == KeyEvent.VK_J && KDown[2] && !auto) {
-					KDown[2] = false;
-					
-					if(sliderStartRatings[2] != null) noteHit(2, false);
-				}
-				if (e.getKeyCode() == KeyEvent.VK_K && KDown[3] && !auto) {
-					KDown[3] = false;
-					
-					if(sliderStartRatings[3] != null) noteHit(3, false);
+				for(Key key : keys) {
+					if (e.getKeyCode() == key.getKeyId() && key.isDown() && !auto) {
+						key.setDown(false);
+						
+						if(key.getSliderStartRating() != null) play.keyHit(key);
+					}
 				}
 			}
 
@@ -204,215 +152,28 @@ public class MainController {
 				
 			}
 		});
+	}
 
-		for(int i = 0; i < 4; i++) {
-			try {
-				Clip hitsound = AudioSystem.getClip();
-				hitsound.open(AudioSystem.getAudioInputStream(new File("hitsound.wav").getAbsoluteFile()));
-				keyHitsounds[i] = hitsound;
-			} catch (LineUnavailableException | IOException | UnsupportedAudioFileException e) {
-				e.printStackTrace();
-			}
-		}
+	public void update() {
+		if(!isRunning()) return;
+		
+		play.update(this);
+		
+		// Updating progress bar
+		view.updateProgress(play.getSongTime() / (float) play.getSong().getEndTime(play.getDifficulty()));
+		
+		// Render the playfield
+		play.renderPlayfield(view);
 	}
 	
-	public void playHitsound(int i) {
-		if(keyHitsounds[i].isRunning()) {
-			keyHitsounds[i].stop();
-		}
-		keyHitsounds[i].setFramePosition(0);
-		keyHitsounds[i].start();
-	}
-
-	private void update() {
-		long time = System.currentTimeMillis() - songStartTime;
-
-		view.updateProgress(time / (float) selectedSong.getEndTime(play.getDifficulty()));
-		
-		if(time >= selectedSong.getEndTime(play.getDifficulty())) {
-			selectedSong.stop();
-			reset();
-			return;
-		}
-		
-		List<List<Note>> lanes = selectedSong.getNotes(play.getDifficulty(), time, approachRate);
-		
-		view.updateView(this, lanes, selectedSong.getCurrentTiming(time, true), time, approachRate);
-		
-		boolean sliderTick = false;
-		
-		if(timeLastSliderTick + selectedSong.getCurrentTiming(time, true).getTimePerBeat() / 4.0D <= time) {
-			timeLastSliderTick += selectedSong.getCurrentTiming(time, true).getTimePerBeat() / 4.0D;
-			sliderTick = true;
-		}
-		
-		for(int i = 0; i < 4; i++) {
-			Note note = null;
-			
-			try {
-				note = selectedSong.getNotes(play.getDifficulty(), i).get(noteCount[i]);
-			} catch (Exception e) {}
-
-			if(sliderStartRatings[i] != null && KDown[i] && note != null && note instanceof NoteSlider && ((NoteSlider) note).containsTime(time)) {
-				if(sliderTick) {
-					play.incrementCombo();
-					setTimeLastRating(System.currentTimeMillis());
-				}
-			}
-			
-			if(auto && ((note != null && note instanceof NoteSlider && (System.currentTimeMillis() - songStartTime) - (note.getTime() + ((NoteSlider)note).getDuration()) >= 0 && sliderStartRatings[i] != null) || (System.currentTimeMillis() - KDownTime[i] >= 70 && sliderStartRatings[i] == null))) {
-				KDown[i] = false;
-
-				if(note instanceof NoteSlider && sliderStartRatings[i] != null) {
-					AccuracyRating acc = play.getAccuracyForError(Math.abs((System.currentTimeMillis() - songStartTime) - (note.getTime() + ((NoteSlider)note).getDuration())));
-					
-					hitNotes.add(note);
-						
-					play.addSliderHit(sliderStartRatings[i], acc);
-					noteCount[i]++;
-					
-					setLastRating(acc);
-						
-					sliderStartRatings[i] = null;
-					
-					continue;
-				}
-			}
-			
-			if(note == null) continue;
-			
-			if(auto && note.getTime() - (System.currentTimeMillis() - songStartTime) <= 0) {
-				if(note instanceof NoteSlider && sliderStartRatings[i] != null) continue; 
-				
-				KDown[i] = true;
-				KDownTime[i] = System.currentTimeMillis();
-				playHitsound(i);
-				
-				long error = note.getTime() - (System.currentTimeMillis() - songStartTime);
-				
-				AccuracyRating acc = null;
-				
-				if(!(note instanceof NoteSlider)) {
-					hitNotes.add(note);
-					
-					acc = play.addHit(error);
-					noteCount[i]++;
-				}
-				else {
-					acc = play.getAccuracyForError(error);
-					
-					sliderStartRatings[i] = acc;
-					
-					play.incrementCombo();
-				}
-				
-				setLastRating(acc);
-				continue;
-			}
-			
-			// handle missed notes
-			if(note instanceof NoteSlider) {
-				if(note.getTime() - (System.currentTimeMillis() - songStartTime) < -(151 - (3 * difficulty)) && sliderStartRatings[i] == null) {
-					sliderStartRatings[i] = AccuracyRating.MISS;
-					
-					play.sliderBreak();
-				}
-				if(note.getTime() + ((NoteSlider) note).getDuration() - (System.currentTimeMillis() - songStartTime) < -(151 - (3 * difficulty))) {
-					hitNotes.add(note);
-				
-					AccuracyRating acc = play.addSliderHit(sliderStartRatings[i], AccuracyRating.MISS);
-					noteCount[i]++;
-					
-					sliderStartRatings[i] = null;
-					
-					setLastRating(acc);
-				}
-			}
-			else if(note.getTime() - (System.currentTimeMillis() - songStartTime) < -(151 - (3 * difficulty))) {
-				hitNotes.add(note);
-				
-				AccuracyRating acc = play.addHit(188 - (3 * difficulty));
-				noteCount[i]++;
-				
-				setLastRating(acc);
-			}
-		}
-	}
-	
-	private void noteHit(int i, boolean isDownKey) {
-		Note note = null;
-		
-		try {
-			note = selectedSong.getNotes(play.getDifficulty(), i).get(noteCount[i]);
-		} catch (Exception e) {}
-		
-		if(note == null) return;
-		
-		if(note instanceof NoteSlider) {
-			if(sliderStartRatings[i] == null) {
-				long error = (System.currentTimeMillis() - songStartTime) - note.getTime();
-				
-				AccuracyRating acc = play.getAccuracyForError(Math.abs(error));
-				
-				if(acc == null) return;
-				
-				if(acc != AccuracyRating.MISS) {
-					play.incrementCombo();
-				}
-				else {
-					play.sliderBreak();
-				}
-				
-				sliderStartRatings[i] = acc;
-			}
-			else if(!isDownKey) {
-				long error = (System.currentTimeMillis() - songStartTime) - (note.getTime() + ((NoteSlider)note).getDuration());
-				
-				AccuracyRating acc = play.getAccuracyForError(Math.abs(error));
-				
-				if(acc != null) {
-					hitNotes.add(note);
-					
-					play.addSliderHit(sliderStartRatings[i], acc);
-					noteCount[i]++;
-
-					setLastRating(acc);
-					
-					sliderStartRatings[i] = null;
-				}
-				else if(error < 0) {
-					sliderStartRatings[i] = AccuracyRating.BAD;
-					play.sliderBreak();
-				}
-			}
-		}
-		else {
-			long error = (System.currentTimeMillis() - songStartTime) - note.getTime();
-			
-			AccuracyRating acc = play.addHit(error);
-			noteCount[i]++;
-			
-			if(acc == null) return;
-			
-			hitNotes.add(note);
-			
-			setLastRating(acc);
-		}
-	}
-	
+	/**
+	 * Resets the current play state to get ready for a new one
+	 */
 	public void reset(){
 		timer.stop();
-		selectedSong.stop();
 		
-		try {
-			Thread.sleep(5);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		play.getSong().stop();
 		
-		hitNotes = new ArrayList<Note>();
-		noteCount = new int[4];
-		lastRating = null;
 		view.updateProgress(0.0f);
 		
 		view.GetScoreText().setVisible(false);
@@ -424,19 +185,24 @@ public class MainController {
 		}
 	}
 
-	public void startPlaying(String songName, String difficulty) {
+	public void startPlay(String songName, String difficulty, Mod...mods) {
+		// If Multiplayer send info
 		if(socket != null) {
 			if(socket instanceof ServerSocket) socket.sendMapInfo(songName, difficulty, auto ? "auto" : "");
 
 			socket.sendScore(0);
 		}
 		
+		// Start play
+		play = new Play(this, new Song(new File("./maps/"+songName+"/"+songName+".wav")), difficulty, mods);
+		
+		play.start(this);
+		
+		timer.start();
+		setRunning(true);
+		
+		// Setting up controls
 		this.getView().requestFocus();
-		
-		this.setSelectedSong(new Song(new File("./maps/"+songName+"/"+songName+".wav")));
-		
-		this.playSong(difficulty);
-		
 		this.getView().getStart().setVisible(false);
 		this.getView().GetScoreText().setVisible(true);
 		this.getView().GetScoreText().setText("0");
@@ -445,33 +211,6 @@ public class MainController {
 		this.getView().setAccuracy(play.getAccuracy());
 	}
 	
-	public void playSong(String difficulty) {
-		try {
-			hitNotes = new ArrayList<Note>();
-			play = new Play(this, selectedSong, difficulty);
-			
-			getSelectedSong().play(new LineListener() {
-				public void update(LineEvent event) {
-					if(event.getType() == Type.STOP) {
-						running = false;
-						reset();
-					}
-				}
-			});
-			
-			songStartTime = System.currentTimeMillis() + 40;
-			timer.start();
-			running=true;
-			
-			view.requestFocus();
-			
-		} catch (Exception ex) {
-			System.out.println("Error with playing sound.");
-			ex.printStackTrace();
-		}
-	}
-	
-
 	public void openSongSelectionDialog() {
 		JFileChooser fileChooser = new JFileChooser();
 		
@@ -491,9 +230,9 @@ public class MainController {
 		
 		if(fileChooser.getSelectedFile() == null) return;
 		
-		selectedSong = new Song(fileChooser.getSelectedFile());
+		Song selectedSong = new Song(fileChooser.getSelectedFile());
 		
-		startDifficultyDialog();
+		startDifficultyDialog(selectedSong);
 	}
 	
 	public void selectMultiplayerRole() {
@@ -504,8 +243,8 @@ public class MainController {
 		selectDialog.add(youChoseServer);
 		selectDialog.add(youChoseClient);
 		selectDialog.setVisible(true);
-
 	}
+	
 	public void startServerDialog(){
 		selectDialog.setVisible(false);
 		inputDialog = new JDialog(view, "Enter server data", true);
@@ -543,7 +282,11 @@ public class MainController {
 		
 		inputDialog.setVisible(true);
 	}
-	public void startDifficultyDialog(){
+	
+	/**
+	 * Opens a dialog that let's the player set difficulty and starts the play
+	 */
+	public void startDifficultyDialog(Song selectedSong){
 		difficultyDialog = new JDialog(view, "Choose difficulty...", true);
 		difficultyDialog.setSize(300, 150);
 		difficultyDialog.setLocationRelativeTo(view);
@@ -559,7 +302,7 @@ public class MainController {
 			public void actionPerformed(ActionEvent e) {
 				difficultyDialog.setVisible(false);
 				
-				startPlaying(selectedSong.getName(), (String) comboBox.getSelectedItem());
+				startPlay(selectedSong.getName(), (String) comboBox.getSelectedItem(), auto ? Mod.AUTO : null);
 			}
 		});
 		
@@ -588,33 +331,9 @@ public class MainController {
 		difficultyDialog.setVisible(true);
 	}
 
-	public MyJFrame getView() {
+	// getter/setter
+	public GameFrame getView() {
 		return view;
-	}
-
-	public Song getSelectedSong() {
-		return selectedSong;
-	}
-
-	public void setSelectedSong(Song selectedSong) {
-		this.selectedSong = selectedSong;
-	}
-
-	public long getTimeLastRating() {
-		return timeLastRating;
-	}
-
-	public void setTimeLastRating(long timeLastRating) {
-		this.timeLastRating = timeLastRating;
-	}
-
-	public AccuracyRating getLastRating() {
-		return lastRating;
-	}
-
-	public void setLastRating(AccuracyRating lastRating) {
-		this.lastRating = lastRating;
-		setTimeLastRating(System.currentTimeMillis());
 	}
 
 	public void closeSocket() {
@@ -623,7 +342,7 @@ public class MainController {
 	}
 
 	public boolean isPlaying() {
-		return running;
+		return isRunning();
 	}
 
 	public ISocket getSocket() {
@@ -634,15 +353,15 @@ public class MainController {
 		return play;
 	}
 
-	public int getHitDifficulty() {
-		return difficulty;
-	}
-
-	public List<Note> GetHitNotes() {
-		return hitNotes;
-	}
-
 	public void setAuto(boolean auto) {
 		this.auto = auto;
+	}
+
+	public boolean isRunning() {
+		return running;
+	}
+
+	public void setRunning(boolean running) {
+		this.running = running;
 	}
 }
