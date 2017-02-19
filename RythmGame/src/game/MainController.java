@@ -468,12 +468,7 @@ public class MainController {
 		
 		selectedSong = new Song(fileChooser.getSelectedFile());
 		
-		if(selectedSong.getDifficulties().size() == 1) {
-			startPlaying(selectedSong.getName(), selectedSong.getDifficulties().stream().findFirst().get());
-		}
-		else {
-			startDifficultyDialog();
-		}
+		startDifficultyDialog();
 	}
 	
 	public void selectMultiplayerRole() {
@@ -525,7 +520,7 @@ public class MainController {
 	}
 	public void startDifficultyDialog(){
 		difficultyDialog = new JDialog(view, "Choose difficulty...", true);
-		difficultyDialog.setSize(200, 150);
+		difficultyDialog.setSize(300, 150);
 		difficultyDialog.setLocationRelativeTo(view);
 		difficultyDialog.setLayout(new GridLayout(3, 1));
 
